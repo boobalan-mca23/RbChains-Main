@@ -1,60 +1,93 @@
 import axios from 'axios';
-import {REACT_APP_BACKEND_SERVER_URL} from '../config/config.js'
-// create Lot
-const payLoad={}
- export const createLot=async(initialWeight,touchValue)=>{
+import { REACT_APP_BACKEND_SERVER_URL } from '../config/config.js';
 
-      payLoad.initialWeight=initialWeight;
-      payLoad.touchValue=touchValue
-      
-     const response=await axios.post(`${REACT_APP_BACKEND_SERVER_URL}/api/lot/lotinfo`,
-      payLoad
-     )
-     console.log('new lot',response.data.data)
-    //  return response.data;
-}  
-
-//getAllLot Data
-export const getAllLot=async()=>{
-    const response=await axios.get(`${REACT_APP_BACKEND_SERVER_URL}/api/process/processes`)
-    return response.data.data
-}
-
-//SaveLot Value
-export const saveLot=async(lotdata)=>{
-
-  try{
-      const response=await axios.post(`${REACT_APP_BACKEND_SERVER_URL}/api/process/saveProcess`,{lotdata:lotdata})
-      return response;
-  }catch(error){
-    if (error.response) {
-        if (error.response.status === 400 && error.response.data.statusMsg === "noMasterId") {
-          alert(error.response.data.message);
-          console.log(error.response)
-        } else {
-          alert(error.response.data.message || "Something went wrong.");
-        }
-      } else {
-        alert("No response from server. Please check your internet connection.");
-      }
+const BASE = REACT_APP_BACKEND_SERVER_URL;
+const handleApiError = (error) => {
+  if (error.response) {
+    const message = error.response.data?.message || "Something went wrong!";
+    console.error("API Error:", message);
+    throw new Error(message);
+  } else if (error.request) {
+    console.error("No response from server");
+    throw new Error("No response from server.");
+  } else {
+    console.error("Error:", error.message);
+    throw new Error(error.message);
   }
- 
-}
+};
 
-//getLotDatewise
-export const getLotDatewise=async(fromDate,toDate)=>{
+// create Lot
+export const createLot = async (initialWeight, touchValue) => {
+  try {
+    const payload = { initialWeight, touchValue };
+    const response = await axios.post(`${BASE}/api/lot/lotinfo`, payload);
+    console.log("new lot", response.data.data[0]);
+    return response.data.data[0];
+  } catch (error) {
+    handleApiError(error);
+  }
+};
 
-    const response=await axios.post(`${REACT_APP_BACKEND_SERVER_URL}/api/process/getLotsByDateRange`,{"fromDate":fromDate,"toDate":toDate})
+// get All Lots
+export const getAllLot = async () => {
+  try {
+    const response = await axios.get(`${BASE}/api/lot`, {
+      params: { page: 1, limit: 2 }
+    });
+    console.log("all lot response", response.data.data);
+    return response.data.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+};
+
+// Save Lot Value
+export const saveLot = async (lotdata) => {
+  try {
+    const response = await axios.post(`${BASE}/api/process/saveProcess`, { lotdata });
     return response;
- 
-}
+  } catch (error) {
+    if (error.response?.status === 400 && error.response.data?.statusMsg === "noMasterId") {
+      alert(error.response.data.message);
+      console.log(error.response);
+      return;
+    }
+    handleApiError(error);
+  }
+};
 
-export const getProductName=async()=>{
-    const response=await axios.get(`${REACT_APP_BACKEND_SERVER_URL}/api/jewelType/getJewelType`)
-    return response.data.allJewel
-}
+// get Lots by Date Range
+export const getLotDatewise = async (fromDate, toDate) => {
+  try {
+    const response = await axios.post(`${BASE}/api/process/getLotsByDateRange`, {
+      fromDate,
+      toDate
+    });
+    return response;
+  } catch (error) {
+    handleApiError(error);
+  }
+};
 
+// get Product Names
+export const getProductName = async () => {
+  try {
+    const response = await axios.get(`${BASE}/api/jewelType/getJewelType`);
+    return response.data.allJewel;
+  } catch (error) {
+    handleApiError(error);
+  }
+};
 
-  
+// get All Lot Process
+export const getAllLotProcess = async () => {
+  try {
+    const response = await axios.get(`${BASE}/api/process`);
+    
+    console.log('response',response.data.data)
 
-
+    return response.data.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+};

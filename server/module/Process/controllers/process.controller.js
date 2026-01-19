@@ -1,6 +1,8 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 //getAllLotProcess 
+
+const {getAll_lotProcess_Service}=require('../services/process.services')
 const dayjs = require('dayjs')
 const utc = require('dayjs/plugin/utc')
 const timezone = require('dayjs/plugin/timezone')
@@ -947,7 +949,21 @@ const getLotsByDateRange = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+const getAllProcess=async(req,res)=>{
+     try{
+         const allProcess=await getAll_lotProcess_Service()
+         
+         return res.status(200).json({
+                 message: "fetched all Lot Process",
+                 status: "ok",
+                 data:allProcess,
+         })
 
+     }catch(err){
+       console.error("Error fetching lot Process:", err.message);
+       res.status(500).json({ error: err.message });  
+     }
+}
 
 module.exports = {
   getlotProcessesById,
@@ -955,6 +971,7 @@ module.exports = {
   getAllLot,
   saveProcess,
   updateProcess,
+  getAllProcess
 
 
 };
