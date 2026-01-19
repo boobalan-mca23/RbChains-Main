@@ -12,12 +12,12 @@ exports.createLotInfo = async (req, res) => {
       });
     }
 
-    const data = await createLotService(initialWeight, touchValue);
+    const {finalData} = await createLotService(initialWeight, touchValue);
 
     return res.status(201).json({
       message: "New Lot Created",
       status: "ok",
-      data
+      data:finalData,
     });
 
   } catch (error) {
@@ -35,14 +35,15 @@ exports.getAllLots = async (req, res) => {
     const page=parseInt(req.query.page)||1
     const limit= parseInt(req.query.limit) || 2;
 
-    const {lots,totalCount} = await getAllLotService(page,limit)
+    const {finalData,totalCount} = await getAllLotService(page,limit)
    
     res.status(200).json({
       message: "fetched all Lots",
       status: "ok",
-       totalCount,
-       totalPage:Math.ceil(totalCount/limit),
-       data:lots
+      totalCount,
+      totalPage:Math.ceil(totalCount/limit),
+      data:finalData,
+     
     })
 
   } catch (error) {
