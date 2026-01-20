@@ -5,10 +5,11 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { createLot, getAllLot, saveLot, getLotDatewise, getProductName,getAllLotProcess } from "../../Api/processTableApi";
 import { styled } from "@mui/material/styles";
-import { processStepId } from "../../ProcessStepId/processStepId";
+
 import "jspdf-autotable";
 import './process.css'
 import LotTableHeader from "./LotTableHeader/LotTableHeader";
+import meltingUtils from '../../utils/meltingProcess/meltingProcessObj'
 
 
 
@@ -263,26 +264,25 @@ const ProcessTable = () => {
     console.log('itemsData', items)
 
   };
-  const findProcessStep = (process_id, attribute_id) => {
-    for (let i = 0; i < processStepId.length; i++) {
-      for (let j = 0; j < processStepId[i].length; j++) {
-        if (processStepId[i][j].process_id === process_id && processStepId[i][j].attribute_id === attribute_id) {
-          return processStepId[i][j].process_step_id;
-        }
-      }
-    }
-    return null; // Return null if no match is found
-  };
+
 
 
   const handleMeltingProcess= (lotid,processName,value) => {
     const tempData = [...items];
-    const lotData = tempData.find((item, index) => item.lotid === lotid);
- 
-    console.log('lotid',lotid)
-    console.log('processName',processName)
+    const lotData = tempData.find((item) => item.id === lotid);
+    const lotIndex=tempData.findIndex((item)=>item.id===lotid)
 
-
+    if(processName==="afterWeight"){
+     const updatedState= meltingUtils.updateMeltingAfter(lotData,lotid,value)
+     tempData.splice(lotIndex,1,updatedState)
+     setItems(tempData)
+        
+    }else{
+       const updatedState= meltingUtils.updateMeltingScarp(lotData,lotid,value)
+       tempData.splice(lotIndex,1,updatedState)
+       setItems(tempData)
+    }
+   
     // console.log('handelSingleItem', index + 1, lotid, process_id, attribute_id, value);
 
     // if (process_id === 2) { //Melting Processs
@@ -368,9 +368,16 @@ const ProcessTable = () => {
       const {ProcessSteps}=item
           ProcessSteps.forEach((product,_)=>{
 
-            if(product.id===6&&product.process_id===3){
-               return;
-            }
+      // Skip step id 6 only for process_id = 3
+      if (product.id === 6 && product.process_id === 3) {
+        return;
+      }
+
+      // Steps 8 & 9 → Only allow 1 AttributeValues entry
+      if ((product.id === 8 || product.id === 9) &&
+          product.AttributeValues?.length >= 1) {
+        return;
+      }
             let newProduct={
                lot_id:lotid,
                item_id:null,
@@ -385,59 +392,87 @@ const ProcessTable = () => {
                product.AttributeValues.push(newProduct)
           })
     })
-    
+     
     lotData.data.splice(2,6,...filtered)
     tempData.splice(index, 1, lotData);
-    console.log('Add Items', tempData);
-    // setItems(tempData);
+    setItems(tempData);
 
   
   };
-  const handleChildItemName = (lotid, childIndex, itemName, lotIndex, master_jewel_id, touchValue) => {
-
+  const handleChildItemName = (lotid, childIndex, itemName, master_jewel_id, touchValue) => {
+   
     const tempData = [...items];
-    const lotData = tempData.filter((item, index) => item.lotid === lotid);
+    
+    const lotData = tempData.find((item) => item.id === lotid);
+    const lotIndex=tempData.findIndex((item)=>item.id===lotid)
+  
 
-    for (let i = 2; i <= 7; i++) {//this create childItem name Each Process and store jewelItem also
-      for (let j = 0; j <= 3; j++) {
-        if ((i === 3 && j === 3) || (i === 6 && j === 3)) {// its don't add value for scarp to Mechine and Cutting process
-          continue
-        }
-        if (i === 2 && j === 0) {
-          continue
-        }
-        lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].item_name = String(itemName);
-        lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].master_jewel_id = master_jewel_id;
-        lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].touchValue = touchValue;
-      }
-    }
+     let filtered = lotData.data.filter((item) => item.process_name !== "scarpGold" && item.process_name !== "melting");
+     filtered.forEach((item,_)=>{
+
+      const {ProcessSteps}=item
+          ProcessSteps.forEach((product,_)=>{
+
+            if(product.id===6&&product.process_id===3){
+               return;
+            }
+             if((product.id===8||product.id===9) && product.process_id===3){
+               return;
+            }
+              
+               product.AttributeValues[childIndex].item_name=String(itemName)
+               product.AttributeValues[childIndex].master_jewel_id=master_jewel_id
+               product.AttributeValues[childIndex].touchValue=touchValue
+
+           })
+    })
+   
+    lotData.data.splice(2,6,...filtered)
+    console.log('lotData',lotData)
+
+    // tempData.splice(lotIndex, 1, lotData);
+
+
+    // for (let i = 2; i <= 7; i++) {//this create childItem name Each Process and store jewelItem also
+    //   for (let j = 0; j <= 3; j++) {
+    //     if ((i === 3 && j === 3) || (i === 6 && j === 3)) {// its don't add value for scarp to Mechine and Cutting process
+    //       continue
+    //     }
+    //     if (i === 2 && j === 0) {
+    //       continue
+    //     }
+    //     lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].item_name = String(itemName);
+    //     lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].master_jewel_id = master_jewel_id;
+    //     lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].touchValue = touchValue;
+    //   }
+    // }
     //Store Item name and Item id to PureWeight
-    lotData[0].data[6].ProcessSteps[3].AttributeValues[childIndex].item_name = String(itemName);
-    lotData[0].data[6].ProcessSteps[3].AttributeValues[childIndex].master_jewel_id = master_jewel_id;
-    lotData[0].data[6].ProcessSteps[3].AttributeValues[childIndex].touchValue = touchValue;
-    for (let i = 2; i <= 7; i++) {//this create Index  Each Process
-      if (i === 6) {
-        lotData[0].data[i].ProcessSteps[3].AttributeValues[childIndex].index = childIndex
-      }
-      for (let j = 0; j <= 3; j++) {
-        if ((i === 3 && j === 3) || (i === 6 && j === 3)) {
-          continue
-        }
-        if (i === 2 && j === 0) {
-          continue
-        }
-        lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].index = childIndex
-      }
-    }
+    // lotData[0].data[6].ProcessSteps[3].AttributeValues[childIndex].item_name = String(itemName);
+    // lotData[0].data[6].ProcessSteps[3].AttributeValues[childIndex].master_jewel_id = master_jewel_id;
+    // lotData[0].data[6].ProcessSteps[3].AttributeValues[childIndex].touchValue = touchValue;
+    // for (let i = 2; i <= 7; i++) {//this create Index  Each Process
+    //   if (i === 6) {
+    //     lotData[0].data[i].ProcessSteps[3].AttributeValues[childIndex].index = childIndex
+    //   }
+    //   for (let j = 0; j <= 3; j++) {
+    //     if ((i === 3 && j === 3) || (i === 6 && j === 3)) {
+    //       continue
+    //     }
+    //     if (i === 2 && j === 0) {
+    //       continue
+    //     }
+    //     lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].index = childIndex
+    //   }
+    // }
 
-    tempData.splice(lotIndex, 1, lotData[0]);
-    setItems(tempData);
-    console.log('items', items);
+    // tempData.splice(lotIndex, 1, lotData[0]);
+    // setItems(tempData);
+    // console.log('items', items);
   }
 
   const handleChildItemWeight = (lotid, childIndex, itemWeight, lotIndex, attribute_id) => {
     const tempData = [...items];
-    const lotData = tempData.filter((item, index) => item.lotid === lotid);
+    const lotData = tempData.filter((item, index) => item.id === lotid);
     if (attribute_id === 3) {
       //After  
       lotData[0].data[2].ProcessSteps[1].AttributeValues[childIndex].value = parseFloat(itemWeight);
@@ -973,7 +1008,8 @@ const ProcessTable = () => {
                             autoComplete="off"
                           />
                         </StyledTableCell>
-                             
+
+                        {/*Melting Before weight Input Box*/}
                         <StyledTableCell>
                             <StyledInput 
                               value={
@@ -987,11 +1023,12 @@ const ProcessTable = () => {
 
                         </StyledTableCell>
                         
+                        {/*Melting after weight Input Box*/}
                         <StyledTableCell >
                           <StyledInput 
                             value={
-                              lotItem.data[1]?.ProcessSteps[1]?.AttributeValues[0]?.value
-                            }
+                               lotItem.data[1]?.ProcessSteps[1]?.AttributeValues[0]?.value
+                              }
                             onChange={(e) => handleMeltingProcess(
                               lotItem.id,
                               lotItem.data[1]?.ProcessSteps[1]?.AttributeInfo.attribute_name,e.target.value)}
@@ -1003,11 +1040,12 @@ const ProcessTable = () => {
                           />
                         </StyledTableCell>
 
+                    {/*Melting scarp  weight Input Box*/}
                         <StyledTableCell>
                           <StyledInput 
-                            value={
-                              lotItem.data[1]?.ProcessSteps[2]?.AttributeValues[0]?.value 
-                            }
+                            disabled={!(lotItem.data[1]?.ProcessSteps[1]?.AttributeValues.length===1)}
+                            value={ lotItem.data[1]?.ProcessSteps[2]?.AttributeValues[0]?.value
+                              }
                             onChange={(e) => handleMeltingProcess(lotItem.id, 
                             lotItem.data[1]?.ProcessSteps[2]?.AttributeInfo.attribute_name,
                              e.target.value,)}
@@ -1018,26 +1056,20 @@ const ProcessTable = () => {
 
                           />
                         </StyledTableCell>
-
+                    {/*Melting loss weight Input Box*/}
                         <StyledTableCell style={{ borderRight: "3px solid black" }}>
 
                           <StyledInput 
-                            value={
-                              typeof lotItem.data[1]?.ProcessSteps[3]?.AttributeValues[0]?.value === "number"
-                                ? lotItem.data[1].ProcessSteps[3].AttributeValues[0].value.toFixed(3)
-                                : ""
-                            }
+                            value={ lotItem.data[1]?.ProcessSteps[3]?.AttributeValues[0]?.value}
                             style={{ width: "120px" }}
                              autoComplete="off"
                           />
                         </StyledTableCell>
-
+                    {/*Wire Before  weight Input Box*/}
                         <StyledTableCell>
                           <StyledInput 
                             value={
-                              typeof lotItem.data[2]?.ProcessSteps[0]?.AttributeValues[0]?.value === "number"
-                                ? lotItem.data[2].ProcessSteps[0].AttributeValues[0].value.toFixed(3)
-                                : ""
+                              lotItem.data[2]?.ProcessSteps[0]?.AttributeValues[0]?.value
                             }
                              autoComplete="off"
                             style={{ width: "120px" }}
@@ -1056,7 +1088,13 @@ const ProcessTable = () => {
                           </Button>
                         </StyledTableCell>
 
-                            
+                              {/* {[4, 3, 4, 4, 4, 4, 1].map((span, i) => (
+                            <StyledTableCell 
+                              key={i} 
+                              colSpan={span !== 1 ? span : undefined}
+                              style={{ borderRight: "3px solid black" }} 
+                            />
+                          ))} */}
                              <StyledTableCell colSpan={4} style={{ borderRight: "3px solid black" }} />
                              <StyledTableCell colSpan={3} style={{ borderRight: "3px solid black" }} />
                              <StyledTableCell colSpan={4} style={{ borderRight: "3px solid black" }} />
@@ -1072,9 +1110,220 @@ const ProcessTable = () => {
                           </StyledTableCell>
                         ) : (<StyledTableCell></StyledTableCell>)
                       }
+
                      
                         </TableRow>
+
+                {
+                  lotItem.data[2].ProcessSteps[1].AttributeValues.map((item, key) => ( 
+                    //
+                    <TableRow key={key} >
+
+                    <StyledTableCell colSpan={8}></StyledTableCell>
+
+                      <Autocomplete
+                        style={{ margin: "10px" }}
+                        options={productName}
+                        getOptionLabel={(option) => option.jewel_name || ""}
+                        value={{
+                          jewel_name: lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key].item_name || "",
+                          master_jewel_id: lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key].master_jewel_id || "",
+                        }}
+                        onChange={(event, newValue) => {
+                          if (newValue) {
+                            handleChildItemName(
+                              lotItem.id,
+                              key,
+                              newValue.jewel_name,
+                              newValue.master_jewel_id,
+                              lotItem.data[0]?.ProcessSteps[0]?.AttributeValues[0].touchValue
+                            );
+                          }
+                        }}
+                        isOptionEqualToValue={(option, value) =>
+                          option.master_jewel_id === value.master_jewel_id
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Select Item"
+                            size="small"
+                            sx={{ width: "150px", fontSize: "14px" }}
+                          />
+                        )}
+                      />
+
+                      <StyledTableCell >
+                        <StyledInput
+                          value={lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key].value}
+                          placeholder="Weight"
+                          onChange={(e) => { handleChildItemWeight(lotItem.id, key, e.target.value, lotIndex, lotItem.data[2]?.ProcessSteps[1]?.AttributeInfo.attribute_id) }}
+                          type="number" style={{ width: "120px" }} autoComplete="off"
+
+                          inputRef={wiring(lotItem.id, 'wiringAfter')}
+                          onKeyDown={(e) => handleKeyDown(e, lotItem.lotid, 'wiringAfter')}
+                        />
+                      </StyledTableCell>
+
+                      {key === 0 && (
+                        <>
+                          <StyledTableCell rowSpan={lotItem.data[2].ProcessSteps[1].AttributeValues.length}>
+
+                            <StyledInput
+                              value={
+                                lotItem.data[2]?.ProcessSteps[2]?.AttributeValues[0]?.value
+                              }
+                              type="number" style={{ width: "120px" }} autoComplete="off"
+                              onChange={(e) => { handleChildItemWeight(lotItem.id, key, e.target.value, lotIndex, lotItem.data[2]?.ProcessSteps[2]?.AttributeInfo.attribute_id) }}
+                              inputRef={wiring(lotItem.id, 'wiringScarp')}
+                              onKeyDown={(e) => handleKeyDown(e, lotItem.lotid, 'wiringScarp')}
+                            ></StyledInput>
+                          </StyledTableCell>
+                          <StyledTableCell rowSpan={lotItem.data[2].ProcessSteps[1].AttributeValues.length} style={{ borderRight: "3px solid black" }}>
+                            <StyledInput
+                              value={
+                                typeof lotItem.data[2]?.ProcessSteps[3]?.AttributeValues[0]?.value === "number"
+                                  ? lotItem.data[2].ProcessSteps[3].AttributeValues[0].value.toFixed(3)
+                                  : ""
+                              }
+
+
+                              style={{ width: "120px" }} autoComplete="off"
+                            ></StyledInput>
+                          </StyledTableCell>
+                        </>
+                      )}
+
+                      {/* {
+                        lotItem.data.map((lotArr, lotArrIndex) => (
+                          lotArrIndex >= 3 ? (
+                            <React.Fragment key={key}>
+                                
+                              <StyledTableCell> 
+                                <StyledInput
+                                  value={
+                                    typeof lotItem.data[lotArrIndex]?.ProcessSteps[0]?.AttributeValues[key]?.value === "number"
+                                      ? lotItem.data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value
+                                      : ""
+                                  }
+
+
+                                  style={{ width: "120px" }}
+
+                                ></StyledInput>
+                              </StyledTableCell>
+                              
+                              <StyledTableCell>
+                                <StyledInput
+                                  value={lotItem.data[lotArrIndex]?.ProcessSteps[1]?.AttributeValues[key]?.value}
+                                  onChange={(e) => {
+                                    handleChildItems(
+                                      lotIndex,
+                                      lotItem.lotid,
+                                      lotItem.lotDate,
+                                      lotItem.data[lotArrIndex]?.ProcessSteps[1]?.AttributeInfo.attribute_id,
+                                      e.target.value,
+                                      key,
+                                      lotItem.data[lotArrIndex]?.ProcessSteps[1].process_id,
+                                      lotArrIndex
+
+                                    )
+                                  }}
+                                  type="number"
+                                  style={{ width: "120px" }}
+                                  autoComplete="off"
+                                  inputRef={mechine(lotItem.lotid, lotItem.data[lotArrIndex]?.process_name + "After", key)}
+                                  onKeyDown={(e) => handleKeyDown(e, lotItem.lotid, lotItem.data[lotArrIndex]?.process_name + "After", key)}
+                                ></StyledInput>
+                              </StyledTableCell>
+                         
+                              {lotItem.data[lotArrIndex]?.process_name === "mechine" || lotItem.data[lotArrIndex]?.process_name === "cutting" ? 
+                                null: (  
+                                <StyledTableCell>
+                                  <StyledInput
+                                    value={lotItem.data[lotArrIndex]?.ProcessSteps[2]?.AttributeValues[key]?.value}
+                                    onChange={(e) => {
+                                      handleChildItems(
+                                        lotIndex,
+                                        lotItem.lotid,
+                                        lotItem.lotDate,
+                                        lotItem.data[lotArrIndex]?.ProcessSteps[2]?.AttributeInfo.attribute_id,
+                                        e.target.value, key,
+                                        lotItem.data[lotArrIndex]?.ProcessSteps[2].process_id,
+                                        lotArrIndex
+
+                                      )
+                                    }}
+                                    type="number"
+                                    style={{ width: "120px" }}
+                                    autoComplete="off"
+                                    inputRef={mechine(lotItem.lotid, lotItem.data[lotArrIndex]?.process_name + "Scarp", key)}
+                                    onKeyDown={(e) => handleKeyDown(e, lotItem.lotid, lotItem.data[lotArrIndex]?.process_name + "Scarp", key)}
+                                  ></StyledInput>
+                                </StyledTableCell>)
+                                }
+                              
+                              <StyledTableCell style={{ borderRight: lotItem.data[lotArrIndex]?.process_name === "cutting" ? "none" : "3px solid black" }}>
+                                {lotItem.data[lotArrIndex]?.process_name === "mechine" || lotItem.data[lotArrIndex]?.process_name === "cutting"? (
+                                  <StyledInput
+                                    value={
+                                      typeof lotItem.data[lotArrIndex]?.ProcessSteps[2]?.AttributeValues[key]?.value === "number"
+                                        ? lotItem.data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value.toFixed(3)
+                                        : ""
+                                    }
+                                    style={{ width: "120px" }}
+
+                                  />) : (<StyledInput 
+                                    value={
+                                      typeof lotItem.data[lotArrIndex]?.ProcessSteps[3]?.AttributeValues[key]?.value === "number"
+                                        ? lotItem.data[lotArrIndex].ProcessSteps[3].AttributeValues[key].value.toFixed(3)
+                                        : ""
+                                    }
+                                    style={{ width: "120px" }}
+
+                                  />)}
+
+                              </StyledTableCell>
+                          
+                              {lotArrIndex === 6 ? (
+                                <StyledTableCell style={{ borderRight: "3px solid black" }}>
+                                  <StyledInput
+                                    value={
+                                      typeof lotItem.data[lotArrIndex]?.ProcessSteps[3]?.AttributeValues[key]?.value === "number"
+                                        ? lotItem.data[lotArrIndex]?.ProcessSteps[3].AttributeValues[key].value.toFixed(3)
+                                        : ""
+                                    }
+                                    style={{ width: "120px" }}
+
+                                  ></StyledInput>
+                                </StyledTableCell>
+                              ) : (" ")
+                              }
+
+                            </React.Fragment>
+                          ) : (" ")
+                        ))
+                      } */}
+
+
+                      {/* {
+                        
+                        lotItem.data[7]?.ProcessSteps[1]?.AttributeValues[key]?.value ?
+                          (<StyledTableCell style={{ borderRight: "3px solid black" }}>
+                            <p style={{ fontSize: "15px" }}>{(lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key]?.value - lotItem.data[7]?.ProcessSteps[1]?.AttributeValues[key].value).toFixed(3)}</p>
+                          </StyledTableCell>)
+                          : (<StyledTableCell style={{ borderRight: "3px solid black" }}></StyledTableCell>)
+                      }
+                      <StyledTableCell style={{ borderTop: "2px solid white", }}></StyledTableCell>  */}
+
+                    </TableRow>
+
+                  ))
+                }
                 </React.Fragment>
+
+
+
 
                     // ) :
                     // (
