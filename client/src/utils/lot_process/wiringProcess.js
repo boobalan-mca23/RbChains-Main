@@ -2,7 +2,7 @@
 
 const wiringAfterTotal = (lotData) => {
   const attributeValues =
-    lotData[0].data[2].ProcessSteps[1].AttributeValues;
+    lotData.data[2].ProcessSteps[1].AttributeValues;
 
   const afterTotal = attributeValues.reduce((total, item) => {
     return total + (item?.value || 0);

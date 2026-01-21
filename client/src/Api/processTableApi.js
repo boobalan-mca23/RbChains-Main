@@ -1,20 +1,22 @@
 import axios from 'axios';
 import { REACT_APP_BACKEND_SERVER_URL } from '../config/config.js';
+import { toast } from "react-toastify";
 
 const BASE = REACT_APP_BACKEND_SERVER_URL;
 const handleApiError = (error) => {
   if (error.response) {
     const message = error.response.data?.message || "Something went wrong!";
-    console.error("API Error:", message);
-    throw new Error(message);
+    toast.error(message);
+    // throw new Error(message);
   } else if (error.request) {
-    console.error("No response from server");
-    throw new Error("No response from server.");
+    toast.error("No response from server.");
+    // throw new Error("No response from server.");
   } else {
-    console.error("Error:", error.message);
-    throw new Error(error.message);
+    toast.error(error.message);
+    // throw new Error(error.message);
   }
 };
+
 
 // create Lot
 export const createLot = async (initialWeight, touchValue) => {
