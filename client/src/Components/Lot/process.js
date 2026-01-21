@@ -9,7 +9,8 @@ import { styled } from "@mui/material/styles";
 import "jspdf-autotable";
 import './process.css'
 import LotTableHeader from "./LotTableHeader/LotTableHeader";
-import meltingUtils from '../../utils/meltingProcess/meltingProcessObj'
+import meltingUtils from '../../utils/lot_process/meltingProcessObj'
+import wiringUtils from '../../utils/lot_process/wiringProcess'
 
 
 
@@ -273,87 +274,18 @@ const ProcessTable = () => {
     const lotIndex=tempData.findIndex((item)=>item.id===lotid)
 
     if(processName==="afterWeight"){
+      // update Melting After weight 
      const updatedState= meltingUtils.updateMeltingAfter(lotData,lotid,value)
      tempData.splice(lotIndex,1,updatedState)
      setItems(tempData)
         
     }else{
+      // update Melting Scarp weight 
        const updatedState= meltingUtils.updateMeltingScarp(lotData,lotid,value)
        tempData.splice(lotIndex,1,updatedState)
        setItems(tempData)
     }
-   
-    // console.log('handelSingleItem', index + 1, lotid, process_id, attribute_id, value);
-
-    // if (process_id === 2) { //Melting Processs
-    //   if (attribute_id === 3) {
-    //     const obj = {
-    //       lot_id: lotid,
-    //       process_step_id: findProcessStep(process_id, attribute_id),
-    //       // item_name: lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
-    //       attribute_id: attribute_id,
-    //       items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
-    //       value: parseFloat(value)
-    //     }
-    //     if (lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 0) {
-    //       lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.push(obj);
-    //       const nextProcessObj = {
-    //         lot_id: lotid,
-    //         process_step_id: 6,
-    //         items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
-    //         // item_name:lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
-    //         attribute_id: 2,
-    //         value: parseFloat(value)
-    //       }
-    //       lotData[0].data[2].ProcessSteps[0].AttributeValues.push(nextProcessObj);
-    //       const lossObj = {
-    //         lot_id: lotid,
-    //         process_step_id: 5,
-    //         items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
-    //         attribute_id: 5,
-    //         value: lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length === 1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 1 ? (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) : 0
-    //       }
-    //       lotData[0].data[index + 1].ProcessSteps[3].AttributeValues.push(lossObj);
-
-    //       tempData.splice(lotIndex, 1, lotData[0]);
-    //       setItems(tempData)
-    //     } else { //Melting Process After Weight Update
-    //       lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value = parseFloat(value);
-    //       lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value = parseFloat(value);
-
-    //       if (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length === 1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 1) {
-    //         lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value = (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value)
-    //       }
-    //       tempData.splice(lotIndex, 1, lotData[0]);
-    //       setItems(tempData)
-    //     }
-    //   }
-    //   else if (attribute_id === 4) {// Melting Process Scrap Value Insert
-    //     const obj = {
-    //       lot_id: lotid,
-    //       process_step_id: findProcessStep(process_id, attribute_id),
-    //       // item_name: lotData.data[index].ProcessSteps[0].AttributeValues[0].item_name,
-    //       attribute_id: attribute_id,
-    //       items_id: lotData[0].data[0].ProcessSteps[0].AttributeValues[0].items_id,
-    //       value: parseFloat(value)
-    //     }
-    //     if (lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.length === 0) {
-    //       lotData[0].data[index + 1].ProcessSteps[2].AttributeValues.push(obj);
-    //       lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value=lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length === 1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 1 ? (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - parseFloat(value) : 0
-    //       tempData.splice(lotIndex, 1, lotData[0]);
-    //       setItems(tempData)
-    //     } else {// Melting Process ScrapValue Update
-    //       lotData[0].data[index + 1].ProcessSteps[2].AttributeValues[0].value = parseFloat(value);
-    //       if (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues.length === 1 && lotData[0].data[index + 1].ProcessSteps[1].AttributeValues.length === 1) {
-    //         lotData[0].data[index + 1].ProcessSteps[3].AttributeValues[0].value = (lotData[0].data[index + 1].ProcessSteps[0].AttributeValues[0].value - lotData[0].data[index + 1].ProcessSteps[1].AttributeValues[0].value) - parseFloat(value)
-    //       }
-
-    //       tempData.splice(lotIndex, 1, lotData[0]);
-    //       setItems(tempData)
-    //     }
-    //   }
-    // }//Melting ProcessEnd
-
+  
   }
 
   const handleAddItemColumns = (lotid, index) => {
@@ -406,7 +338,6 @@ const ProcessTable = () => {
     const lotData = tempData.find((item) => item.id === lotid);
     const lotIndex=tempData.findIndex((item)=>item.id===lotid)
   
-
      let filtered = lotData.data.filter((item) => item.process_name !== "scarpGold" && item.process_name !== "melting");
      filtered.forEach((item,_)=>{
 
@@ -433,77 +364,29 @@ const ProcessTable = () => {
     // tempData.splice(lotIndex, 1, lotData);
 
 
-    // for (let i = 2; i <= 7; i++) {//this create childItem name Each Process and store jewelItem also
-    //   for (let j = 0; j <= 3; j++) {
-    //     if ((i === 3 && j === 3) || (i === 6 && j === 3)) {// its don't add value for scarp to Mechine and Cutting process
-    //       continue
-    //     }
-    //     if (i === 2 && j === 0) {
-    //       continue
-    //     }
-    //     lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].item_name = String(itemName);
-    //     lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].master_jewel_id = master_jewel_id;
-    //     lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].touchValue = touchValue;
-    //   }
-    // }
-    //Store Item name and Item id to PureWeight
-    // lotData[0].data[6].ProcessSteps[3].AttributeValues[childIndex].item_name = String(itemName);
-    // lotData[0].data[6].ProcessSteps[3].AttributeValues[childIndex].master_jewel_id = master_jewel_id;
-    // lotData[0].data[6].ProcessSteps[3].AttributeValues[childIndex].touchValue = touchValue;
-    // for (let i = 2; i <= 7; i++) {//this create Index  Each Process
-    //   if (i === 6) {
-    //     lotData[0].data[i].ProcessSteps[3].AttributeValues[childIndex].index = childIndex
-    //   }
-    //   for (let j = 0; j <= 3; j++) {
-    //     if ((i === 3 && j === 3) || (i === 6 && j === 3)) {
-    //       continue
-    //     }
-    //     if (i === 2 && j === 0) {
-    //       continue
-    //     }
-    //     lotData[0].data[i].ProcessSteps[j].AttributeValues[childIndex].index = childIndex
-    //   }
-    // }
-
-    // tempData.splice(lotIndex, 1, lotData[0]);
-    // setItems(tempData);
-    // console.log('items', items);
   }
 
-  const handleChildItemWeight = (lotid, childIndex, itemWeight, lotIndex, attribute_id) => {
+  const handleWiringProcess = (lotid, childIndex, itemWeight,attribute_id) => {
     const tempData = [...items];
-    const lotData = tempData.filter((item, index) => item.id === lotid);
+    const lotData = tempData.find((item, index) => item.id === lotid);
+    const lotIndex=tempData.findIndex((item)=>item.id===lotid)
+
     if (attribute_id === 3) {
       //After  
-      lotData[0].data[2].ProcessSteps[1].AttributeValues[childIndex].value = parseFloat(itemWeight);
-      lotData[0].data[2].ProcessSteps[1].AttributeValues[childIndex].index = childIndex
-
-      let afterTotal = 0
-      for (const loss of lotData[0].data[2].ProcessSteps[1].AttributeValues) {
-        afterTotal += loss.value
-      }
-      //Loss
-
-      lotData[0].data[2].ProcessSteps[3].AttributeValues[0].value =lotData[0].data[2].ProcessSteps[0].AttributeValues.length===1? lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value - afterTotal:0-afterTotal
-      lotData[0].data[2].ProcessSteps[3].AttributeValues[0].index = childIndex
-      // next process before 
-      lotData[0].data[3].ProcessSteps[0].AttributeValues[childIndex].value = parseFloat(itemWeight);
-      lotData[0].data[3].ProcessSteps[0].AttributeValues[childIndex].index = childIndex
-    }
+      const updatedState=wiringUtils.updateWiringAfter(lotData,childIndex,itemWeight)
+      console.log('updatedState for wiring after',updatedState)
+      // tempData.splice(lotIndex, 1, lotData);
+     }
     if (attribute_id === 4) {
       // scarp
-      lotData[0].data[2].ProcessSteps[2].AttributeValues[childIndex].value = parseFloat(itemWeight);
-      lotData[0].data[2].ProcessSteps[2].AttributeValues[childIndex].index = childIndex
-      let afterTotal = 0
-      for (const loss of lotData[0].data[2].ProcessSteps[1].AttributeValues) {
-        afterTotal += loss.value
-      }
-      lotData[0].data[2].ProcessSteps[3].AttributeValues[childIndex].value = lotData[0].data[2].ProcessSteps[0].AttributeValues.length===1 ?(lotData[0].data[2].ProcessSteps[0].AttributeValues[0].value - parseFloat(afterTotal)) - parseFloat(itemWeight):0
+      const updatedState=wiringUtils.updateWiringScarp(lotData,childIndex,itemWeight)
+      console.log('updatedState for wiring scarp',updatedState)
+      // tempData.splice(lotIndex, 1, lotData);
     }
 
-    tempData.splice(lotIndex, 1, lotData[0]);
-    setItems(tempData);
-    console.log('items', items);
+   
+    // setItems(tempData);
+    // console.log('items', items);
   }
 
   const handleCreateLot = () => {
@@ -1157,7 +1040,7 @@ const ProcessTable = () => {
                         <StyledInput
                           value={lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key].value}
                           placeholder="Weight"
-                          onChange={(e) => { handleChildItemWeight(lotItem.id, key, e.target.value, lotIndex, lotItem.data[2]?.ProcessSteps[1]?.AttributeInfo.attribute_id) }}
+                          onChange={(e) => { handleWiringProcess(lotItem.id, key, e.target.value,lotItem.data[2]?.ProcessSteps[1]?.AttributeInfo.attribute_id) }}
                           type="number" style={{ width: "120px" }} autoComplete="off"
 
                           inputRef={wiring(lotItem.id, 'wiringAfter')}
@@ -1174,7 +1057,7 @@ const ProcessTable = () => {
                                 lotItem.data[2]?.ProcessSteps[2]?.AttributeValues[0]?.value
                               }
                               type="number" style={{ width: "120px" }} autoComplete="off"
-                              onChange={(e) => { handleChildItemWeight(lotItem.id, key, e.target.value, lotIndex, lotItem.data[2]?.ProcessSteps[2]?.AttributeInfo.attribute_id) }}
+                              onChange={(e) => { handleWiringProcess(lotItem.id, key, e.target.value,lotItem.data[2]?.ProcessSteps[2]?.AttributeInfo.attribute_id) }}
                               inputRef={wiring(lotItem.id, 'wiringScarp')}
                               onKeyDown={(e) => handleKeyDown(e, lotItem.lotid, 'wiringScarp')}
                             ></StyledInput>
