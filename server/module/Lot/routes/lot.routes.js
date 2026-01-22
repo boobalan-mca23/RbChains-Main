@@ -7,6 +7,7 @@ router.post("/lotinfo",lot.createLotInfo);
 
 // // Get all lots
 router.get("/",lot.getAllLots);
+router.get('/lotByDateRange',lot.getLotsByDateRange)
 
 // // Update a lot by ID
 // router.put("/lotinfo/:id", updateLotInfo);
