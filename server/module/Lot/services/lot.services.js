@@ -41,50 +41,15 @@ exports.createLotService = async (initialWeight, touchValue) => {
     }
   });
 
-  
-  const stepIds = (await prisma.processSteps.findMany()).map(s => s.id);
 
-  const lotInfo = await prisma.lotProcess.findMany({
-    include: {
-      ProcessSteps: {
-        include: {
-          AttributeInfo: true,
-          AttributeValues: {
-            where: {
-              lot_id:newLot.id,
-              process_step_id: { in: stepIds }
-            }
-          }
-        }
-      }
-    }
-  });
-
-  const scarpData = await prisma.scarpInfo.findFirst({
-    where: { createdAt: { gte: today, lte: end } }
-  });
-
-   const finalData=[{id:newLot.id,data:lotInfo,date:newLot.createdAt}]
-  
-   return {
-    finalData
-  };
 };
 
 
 exports.getAllLotService=async(page,limit)=>{
 
-     
-     const skip=(page-1) * limit
-
-     const todayLots = await prisma.lotInfo.findMany({
-      where:{ createdAt:{ gte:today, lte:end} },
-      skip:parseInt(skip),
-      take:parseInt(limit),
-      
-    });
-
-
+   const todayLots = await prisma.lotInfo.findMany({
+              where:{ createdAt:{ gte:today, lte:end} },
+        });
 
   const stepIds = (await prisma.processSteps.findMany()).map(s => s.id);
 
@@ -118,13 +83,9 @@ exports.getAllLotService=async(page,limit)=>{
     });
       
 
-    const totalCount=await prisma.lotInfo.count({
-      where: { createdAt: { gte: today, lte: end } }
-     })
-
     return {
-      //  finalData:[...finalData,{scarpInfo:scarpData}]||[],
-       finalData,
-       totalCount
+       finalData:[...finalData,{scarpInfo:scarpData}]||[],
+      
     }
 }
+

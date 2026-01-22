@@ -1,7 +1,8 @@
 
 
-const { createLotService ,getAllLotService} = require("../services/lot.services");
-
+const { json } = require("body-parser");
+const { createLotService ,getAllLotService,getLotsByDateRangeService} = require("../services/lot.services");
+// create new lot
 exports.createLotInfo = async (req, res) => {
   try {
     const { initialWeight, touchValue } = req.body;
@@ -12,12 +13,11 @@ exports.createLotInfo = async (req, res) => {
       });
     }
 
-    const {finalData} = await createLotService(initialWeight, touchValue);
+    await createLotService(initialWeight, touchValue);
 
     return res.status(201).json({
       message: "New Lot Created",
       status: "ok",
-      data:finalData,
     });
 
   } catch (error) {
@@ -29,25 +29,21 @@ exports.createLotInfo = async (req, res) => {
   }
 };
 
-
+// get today lot information
 exports.getAllLots = async (req, res) => {
   try {
-    const page=parseInt(req.query.page)||1
-    const limit= parseInt(req.query.limit) || 2;
-
-    const {finalData,totalCount} = await getAllLotService(page,limit)
+  
+    const {finalData} = await getAllLotService()
    
     res.status(200).json({
       message: "fetched all Lots",
       status: "ok",
-      totalCount,
-      totalPage:Math.ceil(totalCount/limit),
       data:finalData,
      
     })
 
   } catch (error) {
-
+  
     console.error("Fetch All lot error:", error);
     return res.status(500).json({
       message: "Failed Fetch All lot",
@@ -56,6 +52,28 @@ exports.getAllLots = async (req, res) => {
 
   }
 };
+// filter lot information with date
+
+exports.getLotsByDateRange=async(req,res)=>{
+   try{
+      const {fromDate,toDate}=req.query
+      const finalData=await getLotsByDateRangeService(fromDate,toDate)
+      console.log(finalData)
+     return res.status(200).json({
+       message: "fetched all Lots",
+       status: "ok",
+       data:finalData
+     })
+
+   }
+   catch(err){
+      console.error("Fetch Date Wise lot error:", err);
+     return res.status(500).json({
+      message: "Failed Fetch Date Wise lot error",
+      error: err.message,
+    });
+   }
+}
 
 
 

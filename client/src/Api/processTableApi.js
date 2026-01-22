@@ -22,9 +22,8 @@ const handleApiError = (error) => {
 export const createLot = async (initialWeight, touchValue) => {
   try {
     const payload = { initialWeight, touchValue };
-    const response = await axios.post(`${BASE}/api/lot/lotinfo`, payload);
-    console.log("new lot", response.data.data[0]);
-    return response.data.data[0];
+    await axios.post(`${BASE}/api/lot/lotinfo`, payload);
+   
   } catch (error) {
     handleApiError(error);
   }
@@ -33,9 +32,7 @@ export const createLot = async (initialWeight, touchValue) => {
 // get All Lots
 export const getAllLot = async () => {
   try {
-    const response = await axios.get(`${BASE}/api/lot`, {
-      params: { page: 1, limit: 2 }
-    });
+    const response = await axios.get(`${BASE}/api/lot`);
     console.log("all lot response", response.data.data);
     return response.data.data;
   } catch (error) {

@@ -12,6 +12,7 @@ import LotTableHeader from "./LotTableHeader/LotTableHeader";
 import meltingUtils from '../../utils/lot_process/meltingProcessObj'
 import wiringUtils from '../../utils/lot_process/wiringProcess'
 import otherProcessUtils from '../../utils/lot_process/otherProcess'
+import handleLotChildItem from "../../utils/lot_ChildItem_Count/lotChildItem_Count";
 
 
 
@@ -394,28 +395,8 @@ const ProcessTable = () => {
     setOpen(false);
   };
 
-  const handleLotChildItem = (response) => {// count total childItems per lot
-    const tempRes = response;
-    let item_Total = 0;
-    for (const res of tempRes) {
-      if (res.scarpBox) {
-        item_Total = handleScarpItemTotal(res.scarpBox[0].mechine.scarpDate, tempRes)
-        res.scarpBox[0].mechine.itemTotal = item_Total
-        res.scarpBox[1].cutting.itemTotal = item_Total
-        item_Total = 0;
-      }
-    }
-    return tempRes
-  }
-  const handleScarpItemTotal = (date, tempRes) => {//add total items
-    let totalItem = 0
-    let filteredLot = tempRes.filter((item, index) => item.lotDate === date)
-    for (const lot of filteredLot) {
-      totalItem += lot.data[3].ProcessSteps[0].AttributeValues.length
-    }
-    return totalItem
+ 
 
-  }
   const handleMechineScarp = (value, date) => {
     const updatedItems = [...items]
     for(let i=0;i<updatedItems.length;i++){
@@ -495,15 +476,37 @@ const ProcessTable = () => {
 
       setItems(updatedItems);  
   }
+ const allData = async () => {
+   
+        const res = await getAllLot();
+         // console.log('useEffect data', res);
+         setItems(res)
+        // setCalculation(docalculation([]))
+        // console.log('after calculation', calculation);
+        setTimeout(()=>setLoading(false),1000)
+   
+   
+  }
+  const allProcess=async()=>{
+      const res=await getAllLotProcess()
+      setProcess(res)
+  }
 
+  const getProduct = async () => {
+    const res = await getProductName();
+    console.log('getProductName', res);
+    setProductName(res)
+
+  }
   const handleSave = async () => {
     try {
 
     
       if (initialWeight && touchValue) {
-        const response = await createLot(initialWeight, touchValue); // Response is an object
-        console.log("API Response:", response); // Check structure
-        setItems((prev)=>[...prev,response])
+
+        await createLot(initialWeight, touchValue); // Response is an object
+        allData() // refetch all lots information
+
         // const tempRes = handleLotChildItem(response)
         // console.log('tempRes', tempRes)
         // setItems(response)
@@ -588,28 +591,7 @@ const ProcessTable = () => {
     setCalculation(tempCal)
 
   }
-  const allData = async () => {
-   
-        const res = await getAllLot();
-         // console.log('useEffect data', res);
-         setItems(res)
-        // setCalculation(docalculation([]))
-        // console.log('after calculation', calculation);
-        setTimeout(()=>setLoading(false),1000)
-   
-   
-  }
-  const allProcess=async()=>{
-      const res=await getAllLotProcess()
-      setProcess(res)
-  }
-
-  const getProduct = async () => {
-    const res = await getProductName();
-    console.log('getProductName', res);
-    setProductName(res)
-
-  }
+ 
   const handleOtherProcess = (lotid, lotDate, attribute_id, value, key, process_id, lotArrIndex) => {
     const tempData = [...items];
     const lotData = tempData.find((item) => item.id === lotid);
@@ -690,8 +672,8 @@ const ProcessTable = () => {
  
       setItems(res.data.data)
       setCalculation(docalculation(res.data.data))
-      handleMachineCalculate(items, calculation)
-      handleCuttingCalculate(items,calculation)
+      // handleMachineCalculate(items, calculation)
+      // handleCuttingCalculate(items,calculation)
       getProduct()
       console.log('itemsAfterDateWiseFilter', items);
     } catch (error) {
@@ -731,11 +713,11 @@ const ProcessTable = () => {
 
   useEffect(() => {
     const response = handleLotChildItem(items)
-    console.log('childItemTotal', response)
-    setItems(response)
-    setCalculation(docalculation(items))
-    handleMachineCalculate(items, calculation)
-    handleCuttingCalculate(items,calculation)
+    // console.log('ItemTotal', response)
+    // setItems(response)
+    // setCalculation(docalculation(items))
+    // handleMachineCalculate(items, calculation)
+    // handleCuttingCalculate(items,calculation)
 
   }, [items])
 
@@ -794,7 +776,7 @@ const ProcessTable = () => {
 
           <Table >
            <LotTableHeader process={process}/>
-           <TableBody >
+           <TableBody  >
              {loading ? (
 
                <TableRow>
@@ -808,13 +790,13 @@ const ProcessTable = () => {
              ):(
               <>
             {items.length>=1 ? (
-              <>
+              < >
              
               {
                 items.map((lotItem, lotIndex) => (
-                  // lotItem.data ? (
-                    <React.Fragment key={lotIndex} >
-                      <TableRow >
+                  lotItem.data ? (
+                    <React.Fragment key={lotIndex+1} >
+                      <TableRow  >
                         <StyledTableCell style={{borderRight: "3px solid black",}}>
                           
                           {/*RawGold Input Box*/}
@@ -831,8 +813,6 @@ const ProcessTable = () => {
                             style={{ width: "120px" }}
                             autoComplete="off"
                           />
-
-
                         </StyledTableCell>
                         
                         {/*Touch Input Box*/}
@@ -1159,110 +1139,56 @@ const ProcessTable = () => {
                 }
                 </React.Fragment>
 
+                    ) :
+                    (
+                      <React.Fragment>
+                         <TableRow>
+                          <StyledTableCell colSpan={12}></StyledTableCell>
+                          {/*  mechine scarpBox */}
+                          <StyledTableCell colSpan={3} style={{
+                            borderLeft: "3px solid black",   
+                            borderRight: "3px solid black", 
+                            borderTop: "none",               
+                            borderBottom: "none"             
+                          }} >
+                            <Grid container spacing={1}>
 
+                              <Grid container item spacing={1}>
+                                <Grid item xs={6} display="flex" alignItems="center">
+                                   <TextField
+                                    label="Date"
+                                    value={new Date(lotItem.scarpInfo.createdAt).toLocaleDateString('en-GB')}
+                                  >
 
-
-                    // ) :
-                    // (
-                    //   <React.Fragment>
-                    //      <TableRow>
-                    //       <StyledTableCell colSpan={12}></StyledTableCell>
-                    //       {/*  mechine scarpBox */}
-                    //       <StyledTableCell colSpan={3} style={{
-                    //         borderLeft: "3px solid black",   
-                    //         borderRight: "3px solid black", 
-                    //         borderTop: "none",               
-                    //         borderBottom: "none"             
-                    //       }} >
-                    //         <Grid container spacing={1}>
-
-                    //           <Grid container item spacing={1}>
-                    //             <Grid item xs={6} display="flex" alignItems="center">
-                    //                <TextField
-                    //                 label="Date"
-                    //                 value={lotItem.scarpBox[0].mechine.scarpDate}
-                    //               >
-
-                    //                </TextField>
+                                   </TextField>
                                  
-                    //             </Grid>
-                    //             <Grid item xs={6}>
-                    //               <TextField fullWidth size="small" label="ItemTotal"
-                    //                 value={lotItem.scarpBox[0].mechine.itemTotal}
-                    //               />
-                    //             </Grid>
-                    //           </Grid>
+                                </Grid>
+                                <Grid item xs={6}>
+                                  <TextField fullWidth size="small" label="ItemTotal"
+                                    value={lotItem.scarpInfo.itemTotal[0].value}
+                                  />
+                                </Grid>
+                              </Grid>
+
+                              <Grid container item spacing={1}>
+                                <Grid item xs={6}>
+                                  <TextField fullWidth size="small" value={lotItem.scarpInfo.scarp[0].value} label="Scarp" type="number" onChange={(e) => {handleMechineScarp(e.target.value, lotItem.scarpBox[0].mechine?.scarpDate) }} autoComplete="off" />
+                                </Grid>
+                                <Grid item xs={6}>
+                                  <TextField fullWidth size="small" label="Loss" value={(lotItem.scarpInfo.totalScarp[0].value).toFixed(3)} />
+                                </Grid>
+                              </Grid>
+                            </Grid>
+                          </StyledTableCell>
+                          <StyledTableCell colSpan={8}></StyledTableCell>
+                          {/* cutting scarpBox */}
+                         
+
+                        </TableRow> 
+                      </React.Fragment>
 
 
-                    //           <Grid container item spacing={1}>
-                    //             <Grid item xs={6}>
-                    //               <TextField fullWidth size="small" value={lotItem.scarpBox[0].mechine?.scarp} label="Scarp" type="number" onChange={(e) => {handleMechineScarp(e.target.value, lotItem.scarpBox[0].mechine?.scarpDate) }} autoComplete="off" />
-                    //             </Grid>
-                    //             <Grid item xs={6}>
-                    //               <TextField fullWidth size="small" label="Loss" value={(lotItem.scarpBox[0].mechine?.totalScarp).toFixed(3)} />
-                    //             </Grid>
-                    //           </Grid>
-                    //         </Grid>
-                    //       </StyledTableCell>
-                    //       <StyledTableCell colSpan={8}></StyledTableCell>
-                    //       {/* cutting scarpBox */}
-                    //       <StyledTableCell colSpan={4} style={{
-                    //         borderLeft: "3px solid black",   
-                    //         borderRight: "3px solid black", 
-                    //         borderTop: "none",               
-                    //         borderBottom: "none"             
-                    //       }} >
-                    //         <Grid container spacing={1}>
-
-                    //           <Grid container item spacing={1}>
-                    //             <Grid item xs={6} display="flex" alignItems="center">
-                    //                <TextField
-                    //                 label="Date"
-                    //                 value={lotItem.scarpBox[1].cutting?.scarpDate}
-                    //               >
-
-                    //                </TextField>
-                                 
-                    //             </Grid>
-                    //             <Grid item xs={6}>
-                    //               <TextField fullWidth size="small" label="ItemTotal"
-                    //                 value={lotItem.scarpBox[1].cutting?.itemTotal}
-                    //               />
-                    //             </Grid>
-                    //           </Grid>
-
-
-                    //           <Grid container item spacing={1}>
-                    //             <Grid item xs={6}>
-                    //               <TextField fullWidth size="small" value={lotItem.scarpBox[1].cutting?.scarp} label="GivenScarp" type="number" 
-                    //                onChange={(e) => {handleCuttingScarp(e.target.value, lotItem.scarpBox[1].cutting?.scarpDate,"scarp") }} 
-                    //                inputRef={cuttingBox(`${lotItem.scarpBox[1].cutting?.lot_id}_${lotItem.scarpBox[1].cutting?.scarpDate}`, 'cuttingBoxScarp')}
-                    //                onKeyDown={(e) => handleKeyCutting(e,`${lotItem.scarpBox[1].cutting?.lot_id}_${lotItem.scarpBox[1].cutting?.scarpDate}`, 'cuttingBoxScarp')}
-                    //               autoComplete="off" />
-                    //             </Grid>
-                    //             <Grid item xs={6}>
-                    //               <TextField fullWidth size="small" value={lotItem.scarpBox[1].cutting?.touch} label="Giventouch" 
-                    //               type="number"
-                    //               onChange={(e) => {handleCuttingScarp(e.target.value, lotItem.scarpBox[1].cutting?.scarpDate,"touch") }} 
-                    //               inputRef={cuttingBox(`${lotItem.scarpBox[1].cutting?.lot_id}_${lotItem.scarpBox[1].cutting?.scarpDate}`, 'cuttingBoxTouch')}
-                    //               onKeyDown={(e) => handleKeyCutting(e, `${lotItem.scarpBox[1].cutting?.lot_id}_${lotItem.scarpBox[1].cutting?.scarpDate}`, 'cuttingBoxTouch')}
-                    //               autoComplete="off" />
-                    //             </Grid>
-                    //             <Grid item xs={6}>
-                    //               <TextField fullWidth size="small" value={lotItem.scarpBox[1].cutting?.cuttingScarp} label="GivenScarpPure" type="number"  autoComplete="off" />
-                    //             </Grid>
-                    //             <Grid item xs={6}>
-                    //               <TextField fullWidth size="small" label="BalanceScarpPure" value={(lotItem.scarpBox[1].cutting?.totalScarp).toFixed(3)} />
-                    //             </Grid>
-                    //           </Grid>
-                    //         </Grid>
-                    //       </StyledTableCell>
-
-                    //     </TableRow> 
-                    //   </React.Fragment>
-
-
-                    // )
+                    )
 
                 ))
               }
