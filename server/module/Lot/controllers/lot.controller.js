@@ -1,6 +1,3 @@
-
-
-const { json } = require("body-parser");
 const { createLotService ,getAllLotService,getLotsByDateRangeService} = require("../services/lot.services");
 // create new lot
 exports.createLotInfo = async (req, res) => {
@@ -33,12 +30,12 @@ exports.createLotInfo = async (req, res) => {
 exports.getAllLots = async (req, res) => {
   try {
   
-    const {finalData} = await getAllLotService()
+    const {lotResponse} = await getAllLotService()
    
     res.status(200).json({
       message: "fetched all Lots",
       status: "ok",
-      data:finalData,
+      data:lotResponse,
      
     })
 

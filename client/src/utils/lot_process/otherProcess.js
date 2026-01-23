@@ -1,5 +1,8 @@
+
+
 const handleOtherProcessAfterWeight = (lotData,lotArrIndex,key,value,process_id) => {
   
+
   lotData.data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value =parseFloat(value);
   // lotData.data[lotArrIndex].ProcessSteps[1].AttributeValues[key].index = key
   
@@ -11,11 +14,11 @@ const handleOtherProcessAfterWeight = (lotData,lotArrIndex,key,value,process_id)
       // lotData.data[lotArrIndex].ProcessSteps[2].AttributeValues[key].index = key
       lotData.data[lotArrIndex].ProcessSteps[3].AttributeValues[key].value =(lotData.data[0].ProcessSteps[0].AttributeValues[0].touchValue *lotData.data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value) /100;
       // lotData.data[lotArrIndex].ProcessSteps[3].AttributeValues[key].index = key
-      //  handleScarpBoxTotal(lotDate,process_id)
+      //  handleScarpBoxTotal(items,lotData,process_id)
     } else {
       lotData.data[lotArrIndex].ProcessSteps[2].AttributeValues[key].value =lotData.data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value -lotData.data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value;
       // lotData.data[lotArrIndex].ProcessSteps[2].AttributeValues[key].index = key
-      // handleScarpBoxTotal(lotDate,process_id)// calculate totalScarp
+      // handleScarpBoxTotal(lotData,process_id)// calculate totalScarp
     }
   } else {
       lotData.data[lotArrIndex].ProcessSteps[3].AttributeValues[key].value = lotData.data[lotArrIndex].ProcessSteps[0].AttributeValues[key].value -lotData.data[lotArrIndex].ProcessSteps[1].AttributeValues[key].value;
