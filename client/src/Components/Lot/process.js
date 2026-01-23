@@ -12,7 +12,7 @@ import LotTableHeader from "./LotTableHeader/LotTableHeader";
 import meltingUtils from '../../utils/lot_process/meltingProcessObj'
 import wiringUtils from '../../utils/lot_process/wiringProcess'
 import otherProcessUtils from '../../utils/lot_process/otherProcess'
-import handleLotChildItem from "../../utils/lot_ChildItem_Count/lotChildItem_Count";
+import handleLotChildItem from "../../utils/lot_calculation/lotChildItem_Count";
 
 
 
@@ -325,7 +325,8 @@ const ProcessTable = () => {
      
     lotData.data.splice(2,6,...filtered)
     tempData.splice(index, 1, lotData);
-    setItems(tempData);
+    const calculateChildItem= handleLotChildItem(tempData)
+    setItems(calculateChildItem);
 
   
   };
@@ -357,10 +358,8 @@ const ProcessTable = () => {
     })
    
     lotData.data.splice(2,6,...filtered)
-    console.log('lotData',lotData)
-
-    // tempData.splice(lotIndex, 1, lotData);
-
+    tempData.splice(lotIndex, 1, lotData);
+    setItems(tempData)
 
   }
 
@@ -373,18 +372,17 @@ const ProcessTable = () => {
       //After  
       const updatedState=wiringUtils.updateWiringAfter(lotData,childIndex,itemWeight)
       console.log('updatedState for wiring after',updatedState)
-      // tempData.splice(lotIndex, 1, lotData);
+      tempData.splice(lotIndex, 1, lotData);
      }
     if (attribute_id === 4) {
       // scarp
       const updatedState=wiringUtils.updateWiringScarp(lotData,childIndex,itemWeight)
       console.log('updatedState for wiring scarp',updatedState)
-      // tempData.splice(lotIndex, 1, lotData);
+      tempData.splice(lotIndex, 1, lotData);
     }
 
+    setItems(tempData);
    
-    // setItems(tempData);
-    // console.log('items', items);
   }
 
   const handleCreateLot = () => {
@@ -600,48 +598,77 @@ const ProcessTable = () => {
     // child Items Value Carry Forward here!!!
     if (attribute_id === 3) { //child item After weight Update
         const updatedState=otherProcessUtils.handleOtherProcessAfterWeight(lotData,lotArrIndex,key,value,process_id)
-        console.log('updatedState in after other pr',updatedState)
-        // tempData.splice(lotIndex, 1, lotData);
-        // setItems(tempData);
+        handleScarpBoxTotal(lotid,lotDate,process_id)
+        tempData.splice(lotIndex, 1, updatedState);
+        
+        setItems(tempData);
       } else if (attribute_id === 4) {//child item Scarp weight Update
-       
+        handleScarpBoxTotal(lotid,lotDate,process_id)
         const updatedState=otherProcessUtils.handleOtherProcessScrapWeight(lotData,lotArrIndex,key,value)
-        console.log('updatedState in scarp other pr',updatedState)
-       // tempData.splice(lotIndex, 1, lotData);
-       // setItems(tempData);
+        
+       tempData.splice(lotIndex, 1, updatedState);
+       setItems(tempData);
 
       }
   }
  
-  const  handleScarpBoxTotal = (lotDate,process_id) => {
-    const tempData = [...items]
-    const lotData = tempData.filter((item, index) => item.lotDate === String(lotDate))
-    let total = 0;
-    for (const lot of lotData) {
-       if(process_id===4){// calculate mechine loss total
-          lot.data[3].ProcessSteps[2].AttributeValues.forEach((item, index) => {
-           total += item.value
-        })
-       }else{// calculate cutting scarppure total
-        lot.data[6].ProcessSteps[3].AttributeValues.forEach((item, index) => {
-           total += item.value
-        })
-       }
-    }
-    //assign totalScarp value
-    for (const lotScarp of tempData) {
-       if(process_id===4){
-         if (lotScarp.scarpBox && lotScarp.scarpBox[0].mechine.scarpDate === String(lotDate)) {
-         lotScarp.scarpBox[0].mechine.totalScarp = total
-        }
-       }else{
-         if (lotScarp.scarpBox && lotScarp.scarpBox[1].cutting.scarpDate === String(lotDate)) {
-         lotScarp.scarpBox[1].cutting.totalScarp = total
-      }
-       }
-    }
-    setItems(tempData)
+   const handleScarpBoxTotal = (lotid,lotDate, process_id) => {
+    const tempData = [...items];
+    const lotInfo=tempData.find((lot,_)=>lot.id===lotid)
+    console.log('lotInfo',lotInfo.data)
+    let total=0;
+   if (process_id === 4) {
+    total = lotInfo.data?.[3]?.ProcessSteps?.[2]?.AttributeValues
+      ?.reduce((acc, item) => {
+        return acc + (Number(item.value) || 0);
+      }, 0);
+  } else {
+    total = lotInfo.data?.[6]?.ProcessSteps?.[3]?.AttributeValues
+      ?.reduce((acc, item) => {
+        return acc + (Number(item.value) || 0);
+      }, 0);
   }
+   console.log('total from loss',total)
+
+
+    // const scarpBoxIndx=tempData.findIndex((scarp,_)=> (scarp?.scarpInfo?.createdAt.split("T")[0])===lotDate.split("T")[0])
+    // const scarp=tempData[scarpBoxIndx]
+    // console.log(scarp)
+
+    // let total = 0;
+    // for (const lot of lotData) {
+    //   if (process_id === 4) {
+    //     // calculate mechine loss total
+    //     lot.data[3].ProcessSteps[2].AttributeValues.forEach((item, index) => {
+    //       total += item.value;
+    //     });
+    //   } else {
+    //     // calculate cutting scarppure total
+    //     lot.data[6].ProcessSteps[3].AttributeValues.forEach((item, index) => {
+    //       total += item.value;
+    //     });
+    //   }
+    // }
+    // //assign totalScarp value
+    // for (const lotScarp of tempData) {
+    //   if (process_id === 4) {
+    //     if (
+    //       lotScarp.scarpBox &&
+    //       lotScarp.scarpBox[0].mechine.scarpDate === String(lotDate)
+    //     ) {
+    //       lotScarp.scarpBox[0].mechine.totalScarp = total;
+    //     }
+    //   } else {
+    //     if (
+    //       lotScarp.scarpBox &&
+    //       lotScarp.scarpBox[1].cutting.scarpDate === String(lotDate)
+    //     ) {
+    //       lotScarp.scarpBox[1].cutting.totalScarp = total;
+    //     }
+    //   }
+    // }
+    // setItems(tempData);
+  };
   const handleTotal = (lotid, lotProcessId, processId) => {
     const tempData = [...items];
     const lotData = tempData.filter((item, index) => item.lotid === lotid);
@@ -711,15 +738,14 @@ const ProcessTable = () => {
 
   }, [])
 
-  useEffect(() => {
-    const response = handleLotChildItem(items)
-    // console.log('ItemTotal', response)
-    // setItems(response)
-    // setCalculation(docalculation(items))
-    // handleMachineCalculate(items, calculation)
-    // handleCuttingCalculate(items,calculation)
+  // useEffect(() => {
+   
+   
+  //   // setCalculation(docalculation(items))
+  //   // handleMachineCalculate(items, calculation)
+  //   // handleCuttingCalculate(items,calculation)
 
-  }, [items])
+  // }, [items])
 
   const billRef = useRef(null);
 
@@ -1036,7 +1062,7 @@ const ProcessTable = () => {
                                   onChange={(e) => {
                                     handleOtherProcess(
                                       lotItem.id,
-                                      lotItem.lotDate,
+                                      lotItem.date,
                                       lotItem.data[lotArrIndex]?.ProcessSteps[1]?.AttributeInfo.attribute_id,
                                       e.target.value,
                                       key,
@@ -1061,7 +1087,7 @@ const ProcessTable = () => {
                                     onChange={(e) => {
                                       handleOtherProcess(
                                         lotItem.id,
-                                        lotItem.lotDate,
+                                        lotItem.date,
                                         lotItem.data[lotArrIndex]?.ProcessSteps[2]?.AttributeInfo.attribute_id,
                                         e.target.value, key,
                                         lotItem.data[lotArrIndex]?.ProcessSteps[2].process_id,
@@ -1141,8 +1167,10 @@ const ProcessTable = () => {
 
                     ) :
                     (
-                      <React.Fragment>
-                         <TableRow>
+                      lotItem?.scarpInfo && Object.keys(lotItem.scarpInfo).length > 0 ? ( 
+             <React.Fragment>
+                        
+                  <TableRow>
                           <StyledTableCell colSpan={12}></StyledTableCell>
                           {/*  mechine scarpBox */}
                           <StyledTableCell colSpan={3} style={{
@@ -1157,7 +1185,7 @@ const ProcessTable = () => {
                                 <Grid item xs={6} display="flex" alignItems="center">
                                    <TextField
                                     label="Date"
-                                    value={new Date(lotItem.scarpInfo.createdAt).toLocaleDateString('en-GB')}
+                                    value={new Date(lotItem?.scarpInfo?.createdAt).toLocaleDateString('en-GB')}
                                   >
 
                                    </TextField>
@@ -1165,32 +1193,32 @@ const ProcessTable = () => {
                                 </Grid>
                                 <Grid item xs={6}>
                                   <TextField fullWidth size="small" label="ItemTotal"
-                                    value={lotItem.scarpInfo.itemTotal[0].value}
+                                    value={lotItem?.scarpInfo?.itemTotal[0].value}
                                   />
                                 </Grid>
                               </Grid>
 
                               <Grid container item spacing={1}>
                                 <Grid item xs={6}>
-                                  <TextField fullWidth size="small" value={lotItem.scarpInfo.scarp[0].value} label="Scarp" type="number" onChange={(e) => {handleMechineScarp(e.target.value, lotItem.scarpBox[0].mechine?.scarpDate) }} autoComplete="off" />
+                                  <TextField fullWidth size="small" value={lotItem?.scarpInfo?.scarp[0]?.value} label="Scarp" type="number"  autoComplete="off" />
                                 </Grid>
                                 <Grid item xs={6}>
-                                  <TextField fullWidth size="small" label="Loss" value={(lotItem.scarpInfo.totalScarp[0].value).toFixed(3)} />
+                                  <TextField fullWidth size="small" label="Loss" value={(lotItem?.scarpInfo?.totalScarp[0]?.value)?.toFixed(3)} />
                                 </Grid>
                               </Grid>
                             </Grid>
                           </StyledTableCell>
                           <StyledTableCell colSpan={8}></StyledTableCell>
+                         
+                         
                           {/* cutting scarpBox */}
                          
-
-                        </TableRow> 
+                         
+                          </TableRow> 
                       </React.Fragment>
-
-
-                    )
-
-                ))
+                  ):null
+                )
+              ))
               }
              </>):(<><p>No Lot Information</p></>)}
               </>

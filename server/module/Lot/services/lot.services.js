@@ -45,7 +45,7 @@ exports.createLotService = async (initialWeight, touchValue) => {
 };
 
 
-exports.getAllLotService=async(page,limit)=>{
+exports.getAllLotService=async()=>{
 
    const todayLots = await prisma.lotInfo.findMany({
               where:{ createdAt:{ gte:today, lte:end} },
@@ -81,11 +81,12 @@ exports.getAllLotService=async(page,limit)=>{
     const scarpData = await prisma.scarpInfo.findFirst({
       where: { createdAt: { gte: today, lte: end } }
     });
-      
+        const lotResponse =
+        finalData.length >= 1
+          ? [...finalData, { scarpInfo: scarpData }]
+          : [];
 
-    return {
-       finalData:[...finalData,{scarpInfo:scarpData}]||[],
-      
-    }
+       return { lotResponse };
+
 }
 

@@ -39,7 +39,7 @@ const createAttributeObj=(lotdata,lotid,processIndex,stepIndex,value)=>{
       return lotdata
     }
     const updateMeltingScarp=(lotdata,lotid,value)=>{
-       console.log('scarp process',lotdata,lotid,value)
+      
 
         if(lotdata?.data[1]?.ProcessSteps[2]?.AttributeValues.length===0){
 
