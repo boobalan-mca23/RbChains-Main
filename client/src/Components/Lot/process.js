@@ -396,84 +396,116 @@ const ProcessTable = () => {
  
 
   const handleMechineScarp = (value, date) => {
-    const updatedItems = [...items]
-    for(let i=0;i<updatedItems.length;i++){
-        if(updatedItems[i]?.scarpBox){
-            if(updatedItems[i]?.scarpBox[0]?.mechine?.scarpDate === date){
-             updatedItems[i].scarpBox[0].mechine.scarp=parseFloat(value)
-            }
-        }
-     
-    }
-
-    // get matched lots data
-    const lotData = updatedItems.filter((item, index) => item.lotDate === String(date))
-    let total = 0;
-    for (const lot of lotData) {
-      lot.data[3].ProcessSteps[2].AttributeValues.forEach((item, index) => {
-        total += item.value
-      })
-    }
-    //subtract totalScarp=scarp-totalScarp
-
-    for (const lotScarp of updatedItems) {
     
-      if (lotScarp.scarpBox && lotScarp.scarpBox[0].mechine.scarpDate === String(date)) {
-        const scarp = Number(lotScarp.scarpBox[0].mechine.scarp);
-        lotScarp.scarpBox[0].mechine.totalScarp = total - (isNaN(scarp) ? 0 : scarp);
+    const tempData=[...items]
+     // first we find the correct scarp box with date
+    const lotInfo = tempData.filter(item =>item?.date?.split("T")[0] === date?.split("T")[0]);
+    const total = lotInfo.reduce((sum, lot) => {
 
-      }
-    }
-      console.log('updated items',updatedItems)
-      setItems(updatedItems);
+    return (
+      sum +
+      (lot.data?.[3]?.ProcessSteps?.[2]?.AttributeValues
+        ?.reduce((a, i) => a + (Number(i.value) || 0), 0) || 0)
+    );
+    }, 0);
+
+     const scarpBoxIndx=tempData.findIndex((scarp,_)=> (scarp?.scarpInfo?.createdAt.split("T")[0])===date.split("T")[0])
+     const scarp=tempData[scarpBoxIndx]
+ 
+     
+     scarp.scarpInfo.scarp[0].value=value
+     scarp.scarpInfo.totalScarp[0].value=value-total
+     console.log('scarp',scarp)
+
+      // then count loss value for each lot in mechine process 
+   
+  
+
+      tempData.splice(scarpBoxIndx,1,scarp)
+
+      setItems(tempData);
+
+    // const updatedItems = [...items]
+    // const scarpBoxIndx=updatedItems.findIndex((scarp,_)=> (scarp?.scarpInfo?.createdAt.split("T")[0])===date.split("T")[0])
+    // const scarp=updatedItems[scarpBoxIndx]
+    
+    // for(let i=0;i<updatedItems.length;i++){
+    //     if(updatedItems[i]?.scarpBox){
+    //         if(updatedItems[i]?.scarpBox[0]?.mechine?.scarpDate === date){
+    //          updatedItems[i].scarpBox[0].mechine.scarp=parseFloat(value)
+    //         }
+    //     }
+     
+    // }
+
+    // // get matched lots data
+    // const lotData = updatedItems.filter((item, index) => item.lotDate === String(date))
+    // let total = 0;
+    // for (const lot of lotData) {
+    //   lot.data[3].ProcessSteps[2].AttributeValues.forEach((item, index) => {
+    //     total += item.value
+    //   })
+    // }
+    // //subtract totalScarp=scarp-totalScarp
+
+    // for (const lotScarp of updatedItems) {
+    
+    //   if (lotScarp.scarpBox && lotScarp.scarpBox[0].mechine.scarpDate === String(date)) {
+    //     const scarp = Number(lotScarp.scarpBox[0].mechine.scarp);
+    //     lotScarp.scarpBox[0].mechine.totalScarp = total - (isNaN(scarp) ? 0 : scarp);
+
+    //   }
+    // }
+    //   console.log('updated items',updatedItems)
+    //   setItems(updatedItems);
    
   };
 
   const handleCuttingScarp=(value,date,option)=>{
- const updatedItems = [...items]
-    for(let i=0;i<updatedItems.length;i++){
-        if(updatedItems[i]?.scarpBox){
-          if(option==="scarp"){
-            if(updatedItems[i]?.scarpBox[1]?.cutting?.scarpDate === date){
-               updatedItems[i].scarpBox[1].cutting.scarp=parseFloat(value)
-               updatedItems[i].scarpBox[1].cutting.cuttingScarp= parseFloat(value)*updatedItems[i].scarpBox[1].cutting.touch/100
-               const lotData = updatedItems.filter((item, index) => item.lotDate === String(date))
-             let total = 0;
-             for (const lot of lotData) {
-                 lot.data[6].ProcessSteps[3].AttributeValues.forEach((item, index) => {
-                     total += item.value
-                   })}
-             
-                for (const lotScarp of updatedItems) {
-                if (lotScarp.scarpBox && lotScarp.scarpBox[1].cutting.scarpDate === String(date)) {
-                      const scarp = Number(lotScarp.scarpBox[1].cutting.cuttingScarp);
-                      lotScarp.scarpBox[1].cutting.totalScarp = total - (isNaN(scarp) ? 0 : scarp);
-                  }}    
+    console.log(value,date,option)
+    const tempData=[...items]
+     // first we find the correct scarp box with date
+    const lotInfo = tempData.filter(item =>item?.date?.split("T")[0] === date?.split("T")[0]);
+  
 
-            }
-          }else{
-            updatedItems[i].scarpBox[1].cutting.touch=parseFloat(value)
-            updatedItems[i].scarpBox[1].cutting.cuttingScarp= updatedItems[i].scarpBox[1].cutting.scarp*parseFloat(value)/100
-            // add total scarpure
+    
+    const total = lotInfo.reduce((sum, lot) => {
 
-             const lotData = updatedItems.filter((item, index) => item.lotDate === String(date))
-             let total = 0;
-             for (const lot of lotData) {
-                 lot.data[6].ProcessSteps[3].AttributeValues.forEach((item, index) => {
-                     total += item.value
-                   })}
-             
-                for (const lotScarp of updatedItems) {
-                if (lotScarp.scarpBox && lotScarp.scarpBox[1].cutting.scarpDate === String(date)) {
-                      const scarp = Number(lotScarp.scarpBox[1].cutting.cuttingScarp);
-                      lotScarp.scarpBox[1].cutting.totalScarp = total - (isNaN(scarp) ? 0 : scarp);
-                  }}      
-          }
-            
-        }}
+    return (
+      sum +
+      (lot.data?.[6]?.ProcessSteps?.[3]?.AttributeValues
+        ?.reduce((a, i) => a + (Number(i.value) || 0), 0) || 0)
+    );
+    }, 0);
 
-      setItems(updatedItems);  
+   
+     const scarpBoxIndx=tempData.findIndex((scarp,_)=> (scarp?.scarpInfo?.createdAt.split("T")[0])===date.split("T")[0])
+     const scarp=tempData[scarpBoxIndx]
+     console.log('scarp',scarp)
+
+
+     if(option==="scarp"){
+    
+       
+        // if cutting scarp
+      scarp.scarpInfo.scarp[1].value=value
+      scarp.scarpInfo.cuttingScarp[1].value= value * scarp.scarpInfo.touch[1].value/100
+      scarp.scarpInfo.totalScarp[1].value=scarp.scarpInfo.cuttingScarp[1].value-total
+     }else{
+      // if cutting touch
+      scarp.scarpInfo.touch[1].value=value
+      scarp.scarpInfo.cuttingScarp[1].value=scarp.scarpInfo.scarp[1].value * value /100
+      scarp.scarpInfo.totalScarp[1].value=scarp.scarpInfo.cuttingScarp[1].value-total
+     }
+
+    
+     tempData.splice(scarpBoxIndx,1,scarp)
+     
+
+      setItems(tempData);
+ 
   }
+
  const allData = async () => {
    
         const res = await getAllLot();
@@ -598,12 +630,12 @@ const ProcessTable = () => {
     // child Items Value Carry Forward here!!!
     if (attribute_id === 3) { //child item After weight Update
         const updatedState=otherProcessUtils.handleOtherProcessAfterWeight(lotData,lotArrIndex,key,value,process_id)
-        handleScarpBoxTotal(lotid,lotDate,process_id)
+        handleScarpBoxTotal(lotDate,process_id)
         tempData.splice(lotIndex, 1, updatedState);
         
         setItems(tempData);
       } else if (attribute_id === 4) {//child item Scarp weight Update
-        handleScarpBoxTotal(lotid,lotDate,process_id)
+        handleScarpBoxTotal(lotDate,process_id)
         const updatedState=otherProcessUtils.handleOtherProcessScrapWeight(lotData,lotArrIndex,key,value)
         
        tempData.splice(lotIndex, 1, updatedState);
@@ -612,62 +644,43 @@ const ProcessTable = () => {
       }
   }
  
-   const handleScarpBoxTotal = (lotid,lotDate, process_id) => {
+   const handleScarpBoxTotal = (lotDate, process_id) => {
     const tempData = [...items];
-    const lotInfo=tempData.find((lot,_)=>lot.id===lotid)
-    console.log('lotInfo',lotInfo.data)
-    let total=0;
-   if (process_id === 4) {
-    total = lotInfo.data?.[3]?.ProcessSteps?.[2]?.AttributeValues
-      ?.reduce((acc, item) => {
-        return acc + (Number(item.value) || 0);
-      }, 0);
-  } else {
-    total = lotInfo.data?.[6]?.ProcessSteps?.[3]?.AttributeValues
-      ?.reduce((acc, item) => {
-        return acc + (Number(item.value) || 0);
-      }, 0);
+    // first find lost info related the date
+    const lotInfo = tempData.filter(item =>item?.date?.split("T")[0] === lotDate?.split("T")[0]);
+
+   // then count loss value for each lot in mechine process and cutting
+   const total = lotInfo.reduce((sum, lot) => {
+  if (process_id === 4) {
+    return (
+      sum +
+      (lot.data?.[3]?.ProcessSteps?.[2]?.AttributeValues
+        ?.reduce((a, i) => a + (Number(i.value) || 0), 0) || 0)
+    );
   }
-   console.log('total from loss',total)
 
+  return (
+    sum +
+    (lot.data?.[6]?.ProcessSteps?.[3]?.AttributeValues
+      ?.reduce((a, i) => a + (Number(i.value) || 0), 0) || 0)
+  );
+}, 0);
 
-    // const scarpBoxIndx=tempData.findIndex((scarp,_)=> (scarp?.scarpInfo?.createdAt.split("T")[0])===lotDate.split("T")[0])
-    // const scarp=tempData[scarpBoxIndx]
-    // console.log(scarp)
+    const scarpBoxIndx=tempData.findIndex((scarp,_)=> (scarp?.scarpInfo?.createdAt.split("T")[0])===lotDate.split("T")[0])
+    const scarp=tempData[scarpBoxIndx]
+   
+    // then update the loss to scarp box
+    if(process_id===4){
+  
+      scarp.scarpInfo.totalScarp[0].value=Number((total).toFixed(3))
+    }else{
+     
+      scarp.scarpInfo.totalScarp[1].value=Number((total).toFixed(3))
+    }
+  
+    tempData.splice(scarpBoxIndx,1,scarp)
 
-    // let total = 0;
-    // for (const lot of lotData) {
-    //   if (process_id === 4) {
-    //     // calculate mechine loss total
-    //     lot.data[3].ProcessSteps[2].AttributeValues.forEach((item, index) => {
-    //       total += item.value;
-    //     });
-    //   } else {
-    //     // calculate cutting scarppure total
-    //     lot.data[6].ProcessSteps[3].AttributeValues.forEach((item, index) => {
-    //       total += item.value;
-    //     });
-    //   }
-    // }
-    // //assign totalScarp value
-    // for (const lotScarp of tempData) {
-    //   if (process_id === 4) {
-    //     if (
-    //       lotScarp.scarpBox &&
-    //       lotScarp.scarpBox[0].mechine.scarpDate === String(lotDate)
-    //     ) {
-    //       lotScarp.scarpBox[0].mechine.totalScarp = total;
-    //     }
-    //   } else {
-    //     if (
-    //       lotScarp.scarpBox &&
-    //       lotScarp.scarpBox[1].cutting.scarpDate === String(lotDate)
-    //     ) {
-    //       lotScarp.scarpBox[1].cutting.totalScarp = total;
-    //     }
-    //   }
-    // }
-    // setItems(tempData);
+    setItems(tempData);
   };
   const handleTotal = (lotid, lotProcessId, processId) => {
     const tempData = [...items];
@@ -1200,7 +1213,18 @@ const ProcessTable = () => {
 
                               <Grid container item spacing={1}>
                                 <Grid item xs={6}>
-                                  <TextField fullWidth size="small" value={lotItem?.scarpInfo?.scarp[0]?.value} label="Scarp" type="number"  autoComplete="off" />
+                                  <TextField fullWidth size="small" 
+                                  value={Number(lotItem?.scarpInfo?.scarp[0]?.value) || ""}
+                                  onChange={(e) => {
+                                    handleMechineScarp(
+                                      Number(e.target.value),   
+                                      lotItem?.scarpInfo?.createdAt
+                                    );
+                                  }}
+                                   label="Scarp" 
+                                   type="number" 
+                                  
+                                  autoComplete="off" />
                                 </Grid>
                                 <Grid item xs={6}>
                                   <TextField fullWidth size="small" label="Loss" value={(lotItem?.scarpInfo?.totalScarp[0]?.value)?.toFixed(3)} />
@@ -1212,7 +1236,120 @@ const ProcessTable = () => {
                          
                          
                           {/* cutting scarpBox */}
-                         
+                          <StyledTableCell
+                        colSpan={4}
+                        style={{
+                          borderLeft: "3px solid black",
+                          borderRight: "3px solid black",
+                          borderTop: "none",
+                          borderBottom: "none",
+                        }}
+                      >
+                        <Grid container spacing={1}>
+                          <Grid container item spacing={1}>
+                            <Grid
+                              item
+                              xs={6}
+                              display="flex"
+                              alignItems="center"
+                            >
+                              <TextField
+                                label="Date"
+                                value={new Date(lotItem?.scarpInfo?.createdAt).toLocaleDateString('en-GB')}
+                              ></TextField>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                label="ItemTotal"
+                                value={lotItem?.scarpInfo?.itemTotal[1].value}
+                              />
+                            </Grid>
+                          </Grid>
+ 
+                          <Grid container item spacing={1}>
+                            <Grid item xs={6}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                value={Number(lotItem?.scarpInfo?.scarp[1]?.value)|| ""}
+                                label="GivenScarp"
+                                type="number"
+                                onChange={(e) => {
+                                  handleCuttingScarp(
+                                   Number(e.target.value),
+                                    lotItem?.scarpInfo?.createdAt,
+                                    "scarp"
+                                  );
+                                }}
+                                // inputRef={cuttingBox(
+                                //   `${lotItem.scarpBox[1].cutting?.lot_id}_${lotItem.scarpBox[1].cutting?.scarpDate}`,
+                                //   "cuttingBoxScarp",
+                                // )}
+                                // onKeyDown={(e) =>
+                                //   handleKeyCutting(
+                                //     e,
+                                //     `${lotItem.scarpBox[1].cutting?.lot_id}_${lotItem.scarpBox[1].cutting?.scarpDate}`,
+                                //     "cuttingBoxScarp",
+                                //   )
+                                // }
+                                autoComplete="off"
+                              />
+                            </Grid>
+                            <Grid item xs={6}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                value={Number(lotItem?.scarpInfo?.touch[1].value) || ""}
+                                label="Giventouch"
+                                type="number"
+                                onChange={(e) => {
+                                  handleCuttingScarp(
+                                  Number(  e.target.value),
+                                    lotItem?.scarpInfo?.createdAt,
+                                    "touch",
+                                  );
+                                }}
+                                // inputRef={cuttingBox(
+                                //   `${lotItem.scarpBox[1].cutting?.lot_id}_${lotItem.scarpBox[1].cutting?.scarpDate}`,
+                                //   "cuttingBoxTouch",
+                                // )}
+                                // onKeyDown={(e) =>
+                                //   handleKeyCutting(
+                                //     e,
+                                //     `${lotItem.scarpBox[1].cutting?.lot_id}_${lotItem.scarpBox[1].cutting?.scarpDate}`,
+                                //     "cuttingBoxTouch",
+                                //   )
+                                // }
+                                autoComplete="off"
+                              />
+                            </Grid>
+                            <Grid item xs={6}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                value={
+                                Number((lotItem?.scarpInfo?.cuttingScarp[1].value).toFixed(3))
+                                }
+                                label="GivenScarpPure"
+                                type="number"
+                                autoComplete="off"
+                              />
+                            </Grid>
+                            <Grid item xs={6}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                label="BalanceScarpPure"
+                                value={(lotItem?.scarpInfo?.totalScarp[1]?.value).toFixed(
+                                  3,
+                                )}
+                              />
+                            </Grid>
+                          </Grid>
+                        </Grid>
+                      </StyledTableCell>
                          
                           </TableRow> 
                       </React.Fragment>
