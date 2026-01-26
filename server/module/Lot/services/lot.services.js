@@ -90,3 +90,88 @@ exports.getAllLotService=async()=>{
 
 }
 
+exports.getLotsByDateRangeService = async (fromDate, toDate) => {
+  // first filter lots Information
+  const lotInfo = await prisma.lotInfo.findMany({
+    where: {
+      createdAt: {
+        gte: fromDate,
+        lte: toDate,
+      },
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+ // second filter scarp Information
+  const scarpInfo = await prisma.scarpInfo.findMany({
+    where: {
+      createdAt: {
+        gte: fromDate,
+        lte: toDate,
+      },
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+
+
+  const stepIds = (await prisma.processSteps.findMany()).map(s => s.id);
+
+    const finalData = await Promise.all(
+      lotInfo.map(async (item) => {
+        const lotInfo = await prisma.lotProcess.findMany({
+          include: {
+            ProcessSteps: {
+              include: {
+                AttributeInfo: true,
+                AttributeValues: {
+                  where: {
+                    lot_id: item.id,
+                    process_step_id: { in: stepIds }
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        return {
+          id: item.id,
+          data: lotInfo,
+          date: item.createdAt
+        };
+      })
+    );
+
+    
+    const clubbedResponse = [];
+        for (const scarpItem of scarpInfo) {
+          
+                // filter lots belonging to this scarp
+                const lotsOfThisScarp = finalData.filter(lot =>
+                  scarpItem.lot_ids.includes(lot.id)
+                );
+
+                // push lots
+                for (const lot of lotsOfThisScarp) {
+                  clubbedResponse.push({
+                    id: lot.id,
+                    data: lot.data,
+                    date: lot.date,
+                  });
+                }
+
+                // push scarpInfo after lots
+                clubbedResponse.push({
+                  scarpInfo: scarpItem,
+                });
+          }
+          
+  return clubbedResponse
+
+
+};
+
+

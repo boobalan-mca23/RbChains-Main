@@ -49,17 +49,27 @@ exports.getAllLots = async (req, res) => {
 
   }
 };
+
 // filter lot information with date
 
 exports.getLotsByDateRange=async(req,res)=>{
    try{
       const {fromDate,toDate}=req.query
-      const finalData=await getLotsByDateRangeService(fromDate,toDate)
-      console.log(finalData)
+
+    if (!fromDate || !toDate) {
+      return res.status(400).json({ error: 'fromDate and toDate are required' });
+    }
+      if (fromDate>toDate) {
+      return res.status(400).json({ error: 'Give Correct Date Formate' });
+    }
+     const startDate = new Date(`${fromDate}T00:00:00.000Z`);
+     const endDate = new Date(`${toDate}T23:59:59.999Z`);
+     const clubbedResponse= await getLotsByDateRangeService(startDate,endDate)
+     
      return res.status(200).json({
        message: "fetched all Lots",
        status: "ok",
-       data:finalData
+       data:clubbedResponse
      })
 
    }
