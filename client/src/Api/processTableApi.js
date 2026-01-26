@@ -58,9 +58,11 @@ export const saveLot = async (lotdata) => {
 // get Lots by Date Range
 export const getLotDatewise = async (fromDate, toDate) => {
   try {
-    const response = await axios.post(`${BASE}/api/process/getLotsByDateRange`, {
-      fromDate,
-      toDate
+    const response = await axios.get(`${BASE}/api/lot/lotByDateRange`, {
+      params:{
+          fromDate,
+          toDate
+      }
     });
     return response;
   } catch (error) {

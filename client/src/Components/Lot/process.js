@@ -22,14 +22,14 @@ const StyledTableContainer = styled(TableContainer)({ margin: "10px auto", maxWi
 const StyledInput = styled(TextField)({ "& .MuiOutlinedInput-notchedOutline": { border: "none" }, "& .MuiInputBase-input": { textAlign: "center", padding: "2px" }, width: "30px" });
 
 const ProcessTable = () => {
-  const [data, setData] = useState([]);
+  const today = new Date().toISOString().split("T")[0];
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
   const [initialWeight, setInitialWeight] = useState("");
   const [touchValue, setTouchValue] = useState("");
   const [isLotCreated, setIsLotCreated] = useState(false);
-  const [fromDate, setFromDate] = useState("")
-  const [toDate, setToDate] = useState("")
+  const [fromDate, setFromDate] = useState(today);
+  const [toDate, setToDate] = useState(today);
   const [process,setProcess]=useState([])
   const [loading,setLoading]=useState(true)
 
@@ -200,8 +200,7 @@ const ProcessTable = () => {
 
 
     tempCalculation[2].process[6].Weight[1].aw = Number(finishTotal)
-    console.log('finishTotal', finishTotal)
-
+    
     let finsihAfterValue = 0;
     let lotFinishValue = 0;
     tempData.forEach((lotData, lotIndex) => {// this calculation for lotDifferent Total
@@ -296,11 +295,11 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
    
     lotData.data[0].ProcessSteps[0].AttributeValues[0].touchValue = parseFloat(value);
     //when user change touch value that time also we need to change pure weight
-    // if (lotData[0].data[6].ProcessSteps[2].AttributeValues.length != 0) {
-    //   lotData[0].data[6].ProcessSteps[2].AttributeValues.forEach((item, index) => {
-    //     lotData[0].data[6].ProcessSteps[3].AttributeValues[index].value = lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue * lotData[0].data[6].ProcessSteps[2].AttributeValues[index].value / 100
-    //   })
-    // }
+    if (lotData[0].data[6].ProcessSteps[2].AttributeValues.length != 0) {
+      lotData[0].data[6].ProcessSteps[2].AttributeValues.forEach((item, index) => {
+        lotData[0].data[6].ProcessSteps[3].AttributeValues[index].value = lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue * lotData[0].data[6].ProcessSteps[2].AttributeValues[index].value / 100
+      })
+    }
     tempData.splice(index, 1, lotData[0]);
     setItems(tempData)
     
@@ -472,10 +471,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
      // first we find the correct scarp box with date
     const lotInfo = tempData.filter(item =>item?.date?.split("T")[0] === date?.split("T")[0]);
   
-
-    
     const total = lotInfo.reduce((sum, lot) => {
-
     return (
       sum +
       (lot.data?.[6]?.ProcessSteps?.[3]?.AttributeValues
@@ -490,8 +486,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
 
 
      if(option==="scarp"){
-    
-       
+     
         // if cutting scarp
       scarp.scarpInfo.scarp[1].value=value
       scarp.scarpInfo.cuttingScarp[1].value= value * scarp.scarpInfo.touch[1].value/100
@@ -502,12 +497,8 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
       scarp.scarpInfo.cuttingScarp[1].value=scarp.scarpInfo.scarp[1].value * value /100
       scarp.scarpInfo.totalScarp[1].value=scarp.scarpInfo.cuttingScarp[1].value-total
      }
-
-    
      tempData.splice(scarpBoxIndx,1,scarp)
-     
-
-      setItems(tempData);
+     setItems(tempData);
  
   }
 
@@ -569,7 +560,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
     try {
       console.log('handleSaveData', items);
 
-      // const res = await saveLot(items);
+      const res = await saveLot(items);
       // console.log('res from save function', res.data.data)
       // setItems(res.data.data)
       // setCalculation(docalculation(res.data.data))
@@ -705,12 +696,12 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
       console.log('DateWiseFilter', res.data.data);
       // const tempRes=handleLotChildItem(res.data.data)
  
-      setItems(res.data.data)
+      // setItems(res.data.data)
       // setCalculation(docalculation(res.data.data))
       // handleMachineCalculate(items, calculation)
       // handleCuttingCalculate(items,calculation)
-      getProduct()
-      console.log('itemsAfterDateWiseFilter', items);
+      // getProduct()
+      // console.log('itemsAfterDateWiseFilter', items);
     } catch (error) {
       console.error('Error fetching data by date:', error.message);
       alert('Select Date First.');
@@ -840,6 +831,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                           
                           {/*RawGold Input Box*/}
                           <StyledInput
+                            onWheel={(e)=>e.target.blur()}
                             value={
                               typeof lotItem.data[0].ProcessSteps[0].AttributeValues[0].value === "number"
                                 ? lotItem.data[0].ProcessSteps[0].AttributeValues[0].value
@@ -858,6 +850,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
 
                         <StyledTableCell style={{borderRight: "3px solid black",}}>
                           <StyledInput
+                            onWheel={(e)=>e.target.blur()}
                             value={lotItem.data[0].ProcessSteps[0].AttributeValues[0].touchValue || " "}
                             onChange={(e) => {
                               handleTouchChange(lotItem.id, lotIndex, e.target.value)
@@ -885,6 +878,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                         {/*Melting after weight Input Box*/}
                         <StyledTableCell >
                           <StyledInput 
+                            onWheel={(e)=>e.target.blur()}
                             value={
                                lotItem.data[1]?.ProcessSteps[1]?.AttributeValues[0]?.value
                               }
@@ -902,6 +896,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                     {/*Melting scarp  weight Input Box*/}
                         <StyledTableCell>
                           <StyledInput 
+                            onWheel={(e)=>e.target.blur()}
                             disabled={!(lotItem.data[1]?.ProcessSteps[1]?.AttributeValues.length===1)}
                             value={ lotItem.data[1]?.ProcessSteps[2]?.AttributeValues[0]?.value
                               }
@@ -1008,6 +1003,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
 
                       <StyledTableCell >
                         <StyledInput
+                          onWheel={(e)=>e.target.blur()}
                           value={lotItem.data[2]?.ProcessSteps[1]?.AttributeValues[key].value}
                           placeholder="Weight"
                           onChange={(e) => { handleWiringProcess(lotItem.id, key, e.target.value,lotItem.data[2]?.ProcessSteps[1]?.AttributeInfo.attribute_id) }}
@@ -1024,6 +1020,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                           <StyledTableCell rowSpan={lotItem.data[2].ProcessSteps[1].AttributeValues.length}>
 
                             <StyledInput
+                              onWheel={(e)=>e.target.blur()}
                               value={
                                 lotItem.data[2]?.ProcessSteps[2]?.AttributeValues[0]?.value
                               }
@@ -1072,6 +1069,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                               {/* Other Process After weights*/}
                               <StyledTableCell>
                                 <StyledInput
+                                  onWheel={(e)=>e.target.blur()}
                                   value={lotItem.data[lotArrIndex]?.ProcessSteps[1]?.AttributeValues[key]?.value}
                                   onChange={(e) => {
                                     handleOtherProcess(
@@ -1097,6 +1095,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                                 null: (  
                                 <StyledTableCell>
                                   <StyledInput
+                                    onWheel={(e)=>e.target.blur()}
                                     value={lotItem.data[lotArrIndex]?.ProcessSteps[2]?.AttributeValues[key]?.value}
                                     onChange={(e) => {
                                       handleOtherProcess(
@@ -1161,7 +1160,6 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                           ) : (" ")
                         ))
                       } 
-
 
                       {
                         
@@ -1289,6 +1287,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                                       lotItem?.scarpInfo?.createdAt
                                     );
                                   }}
+                                    onWheel={(e)=>e.target.blur()}
                                    label="Scarp" 
                                    type="number" 
                                   
@@ -1344,6 +1343,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                                 value={Number(lotItem?.scarpInfo?.scarp[1]?.value)|| ""}
                                 label="GivenScarp"
                                 type="number"
+                                onWheel={(e)=>e.target.blur()}
                                 onChange={(e) => {
                                   handleCuttingScarp(
                                    Number(e.target.value),
@@ -1372,6 +1372,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                                 value={Number(lotItem?.scarpInfo?.touch[1].value) || ""}
                                 label="Giventouch"
                                 type="number"
+                                onWheel={(e)=>e.target.blur()}
                                 onChange={(e) => {
                                   handleCuttingScarp(
                                   Number(  e.target.value),
@@ -1397,9 +1398,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                               <TextField
                                 fullWidth
                                 size="small"
-                                value={
-                                Number((lotItem?.scarpInfo?.cuttingScarp[1].value).toFixed(3))
-                                }
+                                value={Number((lotItem?.scarpInfo?.cuttingScarp[1].value).toFixed(3))}
                                 label="GivenScarpPure"
                                 type="number"
                                 autoComplete="off"
@@ -1431,16 +1430,15 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
             ) }
             
             </TableBody> 
+
+            {/* Table Footer */}
+            
             <LotTableFooter calculation={calculation}/>
           </Table>
           <ToastContainer />
         </div>
       </StyledTableContainer>
-      {/* <Button variant="contained" color="primary" onClick={handleDownloadPdf}>
-        Download as PDF
-      </Button>
-      <Button variant="contained" onClick={exportToExcel} style={{ marginLeft: '1rem' }}>Excel</Button> */}
-
+     
       <Modal open={open} onClose={handleClose}>
         <Box
           sx={{
@@ -1458,8 +1456,10 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
             Enter Initial Weight
           </Typography>
           <TextField
+            type="number"
             fullWidth
             label="Initial Weight"
+            onWheel={(e)=>e.target.blur()}
             value={initialWeight}
             onChange={(e) => setInitialWeight(e.target.value)}
             autoComplete="off"
@@ -1474,6 +1474,8 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
             Touch Weight
           </Typography>
           <TextField
+            type="number"
+            onWheel={(e)=>e.target.blur()}
             fullWidth
             label="Touch Weight"
             value={touchValue}
@@ -1503,12 +1505,3 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
 };
 
 export default ProcessTable;
-
-
-
-
-
-
-
-
-
