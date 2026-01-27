@@ -42,9 +42,11 @@ export const getAllLot = async () => {
 
 // Save Lot Value
 export const saveLot = async (lotdata) => {
+  
   try {
     const response = await axios.post(`${BASE}/api/process/saveProcess`, { lotdata });
-    return response;
+    return response.data.data||[];
+
   } catch (error) {
     if (error.response?.status === 400 && error.response.data?.statusMsg === "noMasterId") {
       alert(error.response.data.message);
@@ -87,7 +89,7 @@ export const getAllLotProcess = async () => {
     
     console.log('response',response.data.data)
 
-    return response.data.data;
+    return response.data.data||[];
   } catch (error) {
     handleApiError(error);
   }

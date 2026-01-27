@@ -10,13 +10,26 @@ exports.wiringStage = async (stepItem) => {
     for (const attr of stepItem.AttributeValues) {
 
       //  Validation
-      if (attr.process_step_id === 7 && !attr.master_jewel_id) {
+      if(!attr.id){
+         // master jewel id check only for new item
+         if (attr.process_step_id === 7 && !attr.master_jewel_id) {
          const err = new Error("JewelName is Required");
          err.code = "NO_MASTER_ID";
          throw err;
       }
 
+      }
+
       if (attr.id) {
+       // in this time we need to update the masterJewel id also
+      if(attr.master_jewel_id){
+         await tx.masterJewelItemMapper.update(
+         {
+          where:{item_id:attr.items_id},
+          data:{master_jewel_id:attr.master_jewel_id}
+        })
+      }
+
         await tx.attributeValue.update({
           where: { id: attr.id },
           data: attr,
