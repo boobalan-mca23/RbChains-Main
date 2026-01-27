@@ -64,43 +64,60 @@ const saveProcess = async (req, res) => {
       return res.status(400).json({ status: 'noData', message: "No Lot Data" });
     }
     
-    for(const lot of lotData){
-      let itemIds=[]
+  async function process(){
+   for (const lot of lotData) {
+  let itemIds = [];
 
-        if(lot?.data){ // only lot data
-           for(const process of lot?.data){
-               const {ProcessSteps}=process
-               // iterate each process steps like bw,aw,sw,lw,pw 
-               ProcessSteps.map((item,_)=>{
-                     
-                      // Scarp process to wiring process but i send wiring process before weight only :
-                         if(item.id>=1 && item.id<=6){ 
-                                initialStage(item)
-                         }else{
+         if (lot?.data) {
+                for (const process of lot.data) {
+                  const { ProcessSteps } = process;
 
-                             if(item.process_id===3){
-                                
-                               // wiring state we get new child items for that lot and that time we need to assign to other process 
-                                  let itemIdArr=wiringStage(item)
-                                 if(item.id===7){
-                                   itemIds=itemIdArr
-                                 }
+                  for (const item of ProcessSteps) {
 
-                             }else{
-                              
-                              // otherProcess
-                             }
+                    // Initial stages
+                    if (item.id >= 1 && item.id <= 6) {
+                      await initialStage(item);
+                    } 
+                    else {
+                      if (item.process_id === 3) {
+
+                        //  wiring stage
+                        if (item.id === 7) {
+                         try{
+                           const itemIdArr = await wiringStage(item); 
+                           itemIds = itemIdArr;
+                         }catch(err){
+                                if (err.code === "NO_MASTER_ID") {
+
+                                return res.status(400).json({
+                                  statusMsg: "noMasterId",
+                                  message: err.message,
+                                });
+                              }
                          }
-                       
+                          
+                        }else{
+                          // wiring scarp and loss weight 
+                           await wiringStage(item); 
+                        }
+
+                      } else {
+                        // otherProcess 
+                        // in other process time we need to refer item id 
+                        await otherProcess(itemIds,item) 
                         
-               })
-               
-           }
-            
-        }else{
-           // scrp box update
-        }
-    }
+                      }
+                    }
+                  }
+                }
+              } else {
+                // scrap box update
+              }
+              }
+
+  }
+  process() 
+   
 
     // for (const lot of lotData) {
     //   lotId = lot.lotid;
@@ -634,13 +651,7 @@ const saveProcess = async (req, res) => {
 
     // res.status(200).json({ data: finalData });
   } catch (error) {
-     if (error.code === "NO_MASTER_ID") {
-
-     return res.status(400).json({
-      statusMsg: "noMasterId",
-      message: err.message,
-    });
-  }
+    
     console.error("Error creating process:", error);
     return res.status(500).json({ message: "Internal Server Error", error });
   }

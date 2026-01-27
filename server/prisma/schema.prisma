@@ -132,7 +132,7 @@ model Item {
 model ProductStocks {
   id              Int      @id @default(autoincrement())
   item_id         Int
-  product_status  String
+  product_status  PRODUCT_STATUS
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @default(now())
  
@@ -199,9 +199,9 @@ model MasterJewelTypeCustomerValue {
 }
  
 model MasterJewelItemMapper{
-   id                 Int      @id @default(autoincrement())
-   item_id            Int
-   master_jewel_id    Int
+   id                  Int      @id @default(autoincrement())
+   item_id             Int      @unique
+   master_jewel_id     Int
    createdAt           DateTime  @default(now())
    updatedAt           DateTime  @default(now())
    MasterJewelType    MasterJewelType @relation(fields: [master_jewel_id], references: [master_jewel_id],onDelete: Cascade)
@@ -279,3 +279,9 @@ enum PRODUCT_TYPE{
   PARENT
   CHILD
 }
+
+enum PRODUCT_STATUS{
+  ACTIVE
+  SOLD
+}
+
