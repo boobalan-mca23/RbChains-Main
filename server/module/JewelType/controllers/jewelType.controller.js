@@ -1,4 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient ,PRODUCT_STATUS} = require("@prisma/client");
 
 const prisma = new PrismaClient()
 
@@ -300,7 +300,7 @@ const billingProductWeight = async (req, res) => {
       const activeProducts = await prisma.productStocks.findMany({
         where: {
           item_id: obj.item_id,
-          product_status: "active"
+          product_status: PRODUCT_STATUS.ACTIVE
         }
       });
        if(activeProducts){// if condition is check that item exits stock

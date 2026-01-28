@@ -224,10 +224,10 @@ function StockReport() {
           <Button variant="outlined" onClick={() => handleStatus("all")}>
             All
           </Button>
-          <Button variant="outlined" onClick={() => handleStatus("active")}>
+          <Button variant="outlined" onClick={() => handleStatus("ACTIVE")}>
             Active
           </Button>
-          <Button variant="outlined" onClick={() => handleStatus("sold")}>
+          <Button variant="outlined" onClick={() => handleStatus("SOLD")}>
             Sold
           </Button>
         </Box>
@@ -277,7 +277,7 @@ function StockReport() {
                     <TableCell align="center">{index + 1}</TableCell>
                     <TableCell align="center">
                       {(() => {
-                        const date = new Date(item.created_at);
+                        const date = new Date(item.createdAt);
                         const d = String(date.getDate()).padStart(2, "0");
                         const m = String(date.getMonth() + 1).padStart(2, "0");
                         const y = date.getFullYear();

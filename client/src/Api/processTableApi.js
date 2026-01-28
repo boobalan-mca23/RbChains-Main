@@ -43,13 +43,18 @@ export const getAllLot = async () => {
 // Save Lot Value
 export const saveLot = async (lotdata) => {
   
-  try {
+  
+  try { 
     const response = await axios.post(`${BASE}/api/process/saveProcess`, { lotdata });
-    return response.data.data||[];
+     
+     if(response.data.status==='ok'){
+        toast.success('Process Saved...')
+     }
+     return response.data
 
   } catch (error) {
     if (error.response?.status === 400 && error.response.data?.statusMsg === "noMasterId") {
-      alert(error.response.data.message);
+      toast.error(error.response.data.message);
       console.log(error.response);
       return;
     }

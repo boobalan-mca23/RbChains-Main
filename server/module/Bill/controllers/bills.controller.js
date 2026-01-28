@@ -1,4 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient,PRODUCT_STATUS } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const convertToIST = (date) => {
@@ -24,7 +24,7 @@ const saveBill = async (req, res) => {
         customer_id: customer_id,
         order_status: order_status,
         total_price: parseFloat(totalPrice),
-        created_at: convertToIST(new Date()) 
+        createdAt: convertToIST(new Date()) 
       }
     });
 
@@ -47,7 +47,7 @@ const saveBill = async (req, res) => {
 
       await prisma.productStocks.update({
         where: { id: newOrderItem.stock_id },
-        data: { product_status: 'sold' }
+        data: { product_status: PRODUCT_STATUS.SOLD}
       });
     }
 
