@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
  
 exports.wiringStage = async (stepItem) => {
   return await prisma.$transaction(async (tx) => {
-    let newChildItem = [];
+
 
     if (!stepItem?.AttributeValues?.length) return null;
 
@@ -22,17 +22,25 @@ exports.wiringStage = async (stepItem) => {
 
       if (attr.id) {
        // in this time we need to update the masterJewel id also
-      if(attr.master_jewel_id){
+
+      if(attr.master_jewel_id && attr.process_step_id === 7){
          await tx.masterJewelItemMapper.update(
          {
           where:{item_id:attr.items_id},
           data:{master_jewel_id:attr.master_jewel_id}
         })
       }
-
+       // and update the attribute values
         await tx.attributeValue.update({
           where: { id: attr.id },
-          data: attr,
+          data: {
+             process_step_id: attr.process_step_id,
+             lot_id: attr.lot_id,
+             attribute_id: attr.attribute_id,
+             item_name: attr.item_name,
+             value: attr.value === null ? null : parseFloat(attr.value),
+             touchValue: attr.touchValue ? parseFloat(attr.touchValue) : null,
+          },
         });
       } else {
         const obj = {
@@ -45,7 +53,7 @@ exports.wiringStage = async (stepItem) => {
         };
 
         if (obj.process_step_id === 7) {
-         let newItem = await tx.item.create({
+          await tx.item.create({
             data: {
               lot_id: obj.lot_id,
               item_type: PRODUCT_TYPE.CHILD,
@@ -61,13 +69,12 @@ exports.wiringStage = async (stepItem) => {
                },
             },
           });
-          newChildItem.push(newItem.item_id)
+         
         } else {
+          // in this area we need to create wiring scarp box and loss
           await tx.attributeValue.create({ data: obj });
         }
       }
     }
-
-    return newChildItem;
   });
 };

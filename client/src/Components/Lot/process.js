@@ -171,9 +171,9 @@ const ProcessTable = () => {
   }
 
   // footer calculation for all lots and process
-  const docalculation = (arrayItems) => {
+  const docalculation = () => {
     // Calculation
-    const tempData = [...arrayItems];
+    const tempData = [...items];
     const tempCalculation = structuredClone(footerCalculation);
 
     let lotTotal = tempData.reduce((acc, item) => {
@@ -533,11 +533,6 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
         await createLot(initialWeight, touchValue); // Response is an object
         allData() // refetch all lots information
 
-        // const tempRes = handleLotChildItem(response)
-        // console.log('tempRes', tempRes)
-        // setItems(response)
-        
-        console.log('items after save', items) // Ensure prevItems is an array
         setInitialWeight("");
         setTouchValue("");// Clear input field
         setOpen(false);
@@ -558,15 +553,14 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
 
   const handleSaveData = async () => {
     try {
-      console.log('handleSaveData', items);
-
-      const res = await saveLot(items);
-      // console.log('res from save function', res.data.data)
-      // setItems(res.data.data)
-      // setCalculation(docalculation(res.data.data))
-      // handleMachineCalculate(res.data.data, calculation)
-      // handleCuttingCalculate(res.data.data,calculation)
-      // toast.success("Lot Saved", { autoClose: 2000 });
+      
+      const res= await saveLot(items);
+      
+     if (res?.status === 200 || res?.success==="ok") {
+        await allData();
+      
+    }
+      // fetch lot information   
     } catch (err) {
       console.log("Enter Lot Information")
     }
@@ -738,7 +732,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
   }, [])
   
     const calculation = useMemo(() => {
-            return docalculation(items);
+            return docalculation();
     }, [items]);
 
 
@@ -756,6 +750,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
   const tableRef = useRef(null);
 
   return (
+    
     <Box sx={{ padding: "20px" }} ref={billRef}>
       <Box sx={{ textAlign: "right", marginBottom: "0px" }}>
         <Button
@@ -781,6 +776,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
       {/* DateWiseFilter */}
 
       <div style={{ padding: 20 }}>
+          <ToastContainer position="top-right" autoClose={2000}/>
         <div style={{ display: "flex", gap: "10px", marginBottom: 0, position: 'relative' }}>
           <TextField
             label="From Date"
@@ -833,8 +829,8 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                           <StyledInput
                             onWheel={(e)=>e.target.blur()}
                             value={
-                              typeof lotItem.data[0].ProcessSteps[0].AttributeValues[0].value === "number"
-                                ? lotItem.data[0].ProcessSteps[0].AttributeValues[0].value
+                              typeof lotItem.data[0]?.ProcessSteps[0]?.AttributeValues[0]?.value === "number"
+                                ? lotItem.data[0]?.ProcessSteps[0]?.AttributeValues[0].value
                                 : ""
                             }
                             onChange={(e) =>
@@ -851,7 +847,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                         <StyledTableCell style={{borderRight: "3px solid black",}}>
                           <StyledInput
                             onWheel={(e)=>e.target.blur()}
-                            value={lotItem.data[0].ProcessSteps[0].AttributeValues[0].touchValue || " "}
+                            value={lotItem.data[0]?.ProcessSteps[0]?.AttributeValues[0]?.touchValue || " "}
                             onChange={(e) => {
                               handleTouchChange(lotItem.id, lotIndex, e.target.value)
                             }}
@@ -1435,7 +1431,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
             
             <LotTableFooter calculation={calculation}/>
           </Table>
-          <ToastContainer />
+        
         </div>
       </StyledTableContainer>
      
