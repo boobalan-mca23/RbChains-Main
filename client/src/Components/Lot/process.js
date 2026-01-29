@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField, Button, Box, Modal, Typography, colors, TableFooter, Autocomplete, Hidden, Grid } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer,TableRow, Paper, TextField, Button, Box, Modal, Typography, Autocomplete, Grid } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -14,7 +14,7 @@ import meltingUtils from '../../utils/lot_process/meltingProcessObj'
 import wiringUtils from '../../utils/lot_process/wiringProcess'
 import otherProcessUtils from '../../utils/lot_process/otherProcess'
 import handleLotChildItem from "../../utils/lot_calculation/lotChildItem_Count";
-
+import DateRangePicker from "../common/DateRangePicker/DateRangePicker";
 
 
 const StyledTableCell = styled(TableCell)({ border: "1px solid #ccc", textAlign: "center", padding: "5px", });
@@ -54,6 +54,7 @@ const ProcessTable = () => {
   ];
 
   const [productName, setProductName] = useState([])
+  const tableRef = useRef(null);
   const touchRef = useRef()
   const saveRef = useRef()
   const meltingRef = useRef({})
@@ -167,118 +168,10 @@ const ProcessTable = () => {
       0
     );
 
-    return totalValue||0;
+    return Number(totalValue)||0;
   }
 
-  // footer calculation for all lots and process
-  const docalculation = () => {
-    // Calculation
-    const tempData = [...items];
-    const tempCalculation = structuredClone(footerCalculation);
-
-    let lotTotal = tempData.reduce((acc, item) => {
-      if (item.data && item.data[0]?.ProcessSteps[0]?.AttributeValues[0]?.value) {
-        return acc + item.data[0].ProcessSteps[0].AttributeValues[0].value;
-      }
-      return acc; // skip this item, don't add anything
-    }, 0);
-    
-     tempCalculation[0].rawGold = lotTotal;
-
-   const finishTotal = tempData.reduce((lotAcc, lotData) => {
   
-    const values =
-    lotData?.data?.[7]?.ProcessSteps?.[1]?.AttributeValues ?? [];
-
-  const lotSum = values.reduce(
-    (attrAcc, item) => attrAcc + (item?.value || 0),
-    0
-  );
-
-  return lotAcc + lotSum;
-}, 0);
-
-
-    tempCalculation[2].process[6].Weight[1].aw = Number(finishTotal)
-    
-    let finsihAfterValue = 0;
-    let lotFinishValue = 0;
-    tempData.forEach((lotData, lotIndex) => {// this calculation for lotDifferent Total
-      if (lotData.data) {
-        if (lotData.data[7].ProcessSteps[1].AttributeValues.length === 0) {
-          finsihAfterValue = 0;
-        } else {
-          lotData.data[7].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
-            finsihAfterValue += arrItem.value
-          })
-          lotFinishValue += lotData.data[0].ProcessSteps[0].AttributeValues[0].value - finsihAfterValue
-          finsihAfterValue = 0;
-        }
-      }
-
-    })
-    tempCalculation[3].lotTotal = lotFinishValue
-    
-     
-
-  const sumAttributeValues = (values = []) =>
-  values.reduce((sum, item) => sum + (item?.value || 0), 0);
-
-for (let processIndex = 1; processIndex <= 7; processIndex++) {
-  let scrapTotal = 0;
-  let lossTotal = 0;
-  let pureTotal = 0;
-
-  tempData.forEach((lot) => {
-    const processSteps = lot?.data?.[processIndex]?.ProcessSteps;
-    if (!processSteps) return;
-
-    // Scrap → step 2
-    scrapTotal += sumAttributeValues(
-      processSteps?.[2]?.AttributeValues
-    );
-
-    // Loss step rule
-    const lossStepIndex =
-      processIndex === 3 || processIndex === 6 ? 2 : 3;
-
-    lossTotal += sumAttributeValues(
-      processSteps?.[lossStepIndex]?.AttributeValues
-    );
-
-    // Pure → ONLY Cutting → step 3
-    if (processIndex === 6) {
-      pureTotal += sumAttributeValues(
-        processSteps?.[3]?.AttributeValues
-      );
-    }
-  });
-
-  const process = tempCalculation[2].process[processIndex - 1];
-
-  // Scrap (exists for all except Machine)
-  if (process.Weight[2]?.sw !== undefined) {
-    process.Weight[2].sw = scrapTotal;
-  }
-
-  // Loss
-  if (processIndex === 3 || processIndex === 6) {
-    process.Weight[2].lw = lossTotal; // Machine & Cutting
-  } else {
-    process.Weight[3].lw = lossTotal; // Normal processes
-  }
-
-  // Pure (ONLY Cutting)
-  if (processIndex === 6) {
-    process.Weight[3].pw = pureTotal;
-  }
-}
-
-    //   console.log('footerCalculation for scw,losw', footerCalculation)
-    // }
-    return tempCalculation
-  }
-
   const handleInitialChange = (lotid, index, value) => {
     const tempData = [...items];
     const lotData = tempData.find((item,_) => item.id === lotid);
@@ -291,11 +184,11 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
   const handleTouchChange = (lotid, index, value) => {
  
     const tempData = [...items];
-    const lotData = tempData.find((item, index) => item.id === lotid);
+    const lotData = tempData.find((item,_) => item.id === lotid);
    
     lotData.data[0].ProcessSteps[0].AttributeValues[0].touchValue = parseFloat(value);
     //when user change touch value that time also we need to change pure weight
-    if (lotData[0].data[6].ProcessSteps[2].AttributeValues.length != 0) {
+    if (lotData[0].data[6].ProcessSteps[2].AttributeValues.length !== 0) {
       lotData[0].data[6].ProcessSteps[2].AttributeValues.forEach((item, index) => {
         lotData[0].data[6].ProcessSteps[3].AttributeValues[index].value = lotData[0].data[0].ProcessSteps[0].AttributeValues[0].touchValue * lotData[0].data[6].ProcessSteps[2].AttributeValues[index].value / 100
       })
@@ -368,6 +261,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
     tempData.splice(index, 1, lotData);
     const calculateChildItem= handleLotChildItem(tempData)
     setItems(calculateChildItem);
+   
 
   
   };
@@ -513,6 +407,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
    
    
   }
+  
   const allProcess=async()=>{
       const res=await getAllLotProcess()
       setProcess(res)
@@ -524,93 +419,164 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
     setProductName(res)
 
   }
-  const handleSave = async () => {
-    try {
-
+  
+  // footer calculation for all lots and process
+  const docalculation = () => {
+    // Calculation
+    const tempData = [...items];
+    const tempCalculation = structuredClone(footerCalculation);
+    // raw gold calculation
+    let lotTotal = tempData.reduce((acc, item) => {
+      if (item.data && item.data[0]?.ProcessSteps[0]?.AttributeValues[0]?.value) {
+        return acc + item.data[0].ProcessSteps[0].AttributeValues[0].value;
+      }
+      return acc; // skip this item, don't add anything
+    }, 0);
     
-      if (initialWeight && touchValue) {
+     tempCalculation[0].rawGold = lotTotal;
 
-        await createLot(initialWeight, touchValue); // Response is an object
-        allData() // refetch all lots information
+   const finishTotal = tempData.reduce((lotAcc, lotData) => {
+  
+    const values =
+    lotData?.data?.[7]?.ProcessSteps?.[1]?.AttributeValues ?? [];
 
-        setInitialWeight("");
-        setTouchValue("");// Clear input field
-        setOpen(false);
-        setIsLotCreated(true);
-        toast.success("Lot Created", { autoClose: 2000 });
-      } else {
-        toast.warn("Enter Lot Details", { autoClose: 2000 });
+  const lotSum = values.reduce(
+    (attrAcc, item) => attrAcc + (item?.value || 0),
+    0
+  );
+
+  return lotAcc + lotSum;
+}, 0);
+
+
+    tempCalculation[2].process[6].Weight[1].aw = Number(finishTotal)
+    // finish process total
+    let finsihAfterValue = 0;
+    let lotFinishValue = 0;
+    tempData.forEach((lotData, lotIndex) => {// this calculation for lotDifferent Total
+      if (lotData.data) {
+        if (lotData.data[7].ProcessSteps[1].AttributeValues.length === 0) {
+          finsihAfterValue = 0;
+        } else {
+          lotData.data[7].ProcessSteps[1].AttributeValues.forEach((arrItem, arrIndex) => {
+            finsihAfterValue += arrItem.value
+          })
+          lotFinishValue += lotData.data[0].ProcessSteps[0].AttributeValues[0].value - finsihAfterValue
+          finsihAfterValue = 0;
+        }
       }
 
-    } catch (error) {
-      setInitialWeight("");
-      setTouchValue("");
-      toast.warn('Error On Create Lot', { autoClose: 1500 })
-    };
-  }
-
-  // console.log("Processes:", processes);
-
-  const handleSaveData = async () => {
-    try {
-      
-      const res= await saveLot(items);
-      
-     if (res?.status === 200 || res?.success==="ok") {
-        await allData();
-      
-    }
-      // fetch lot information   
-    } catch (err) {
-      console.log("Enter Lot Information")
-    }
-
-  }
-  // const handleCuttingCalculate = (response, calculation) => {
-  //   const tempData = response;
-  //   const tempCal = [...calculation]
-  //   // calculate cutting loss total
-  //   let cuttingScarpBox_total=0,cuttingLoss_total=0;
-  //   for (const lot of tempData) {
-  //     if (lot.data) {
-      
-  //       if(lot.data[6]?.ProcessSteps[2]?.AttributeValues.length>=1){
-  //         cuttingLoss_total+=lot.data[6]?.ProcessSteps[2]?.AttributeValues.reduce((acc,item)=>acc+item.value,0)
-  //       }
-  //     }else{
-  //        cuttingScarpBox_total+=lot.scarpBox[1].cutting.scarp
-  //      }
-  //   }
-  //   console.log('cuttingLossTotal',cuttingLoss_total)
-  //   console.log('cuttingScarpBox',cuttingScarpBox_total)
+    })
+    tempCalculation[3].lotTotal = lotFinishValue
     
-  //   tempCal[2].process[5].Weight[2].lw = cuttingLoss_total-cuttingScarpBox_total
+     
 
-  //   // calculate cutting pure total
-  //   let cutting_total = 0;
-  //   for (const lot of tempData) {
-  //     if (lot.scarpBox) {
-  //       cutting_total += lot.scarpBox[1].cutting.totalScarp
-  //     }
-  //   }
+  const sumAttributeValues = (values = []) =>
+  values.reduce((sum, item) => sum + (item?.value || 0), 0);
+// count all process scarp and loss total
+for (let processIndex = 1; processIndex <= 7; processIndex++) {
+  let scrapTotal = 0;
+  let lossTotal = 0;
+  let pureTotal = 0;
 
-  //   tempCal[2].process[5].Weight[3].pw = cutting_total
-  //   setCalculation(tempCal)
+  tempData.forEach((lot) => {
+    const processSteps = lot?.data?.[processIndex]?.ProcessSteps;
+    if (!processSteps) return;
 
-  // }
-  // const handleMachineCalculate = (response, calculation) => {
-  //   const tempData = response;
-  //   const tempCal = [...calculation]
-  //   let total = 0;
-  //   for (const lot of tempData) {
-  //     if (lot.scarpBox) {
-  //       total += lot.scarpBox[0].mechine.totalScarp
-  //     }
-  //   }
-  //   tempCal[2].process[2].Weight[2].lw = total
-  //   setCalculation(tempCal)
+    // Scrap → step 2
+    scrapTotal += sumAttributeValues(
+      processSteps?.[2]?.AttributeValues
+    );
 
-  // }
+   if(processIndex!==3 && processIndex!==6){
+     
+    lossTotal += sumAttributeValues(
+      processSteps?.[3]?.AttributeValues
+    );
+  }else{
+    if(processIndex===3){
+      lossTotal=handleMachineCalculate(tempData)
+
+    }else{
+      const{cuttingLoss,cutting_Puretotal}=handleCuttingCalculate(tempData)
+      lossTotal=cuttingLoss
+      pureTotal=cutting_Puretotal
+    }
+  }
+  
+  
+  });
+
+  const process = tempCalculation[2].process[processIndex - 1];
+
+  // Scrap (exists for all except Machine)
+  if (process.Weight[2]?.sw !== undefined) {
+    process.Weight[2].sw = scrapTotal;
+  }
+
+  // Normal processes
+  if (processIndex !==3 && processIndex !==6) {
+       process.Weight[3].lw = lossTotal;
+  } else {
+    // mechine and cutting process
+      if(processIndex===6){
+      process.Weight[2].lw = lossTotal;
+      process.Weight[3].pw=pureTotal
+      }else{
+      process.Weight[2].lw = lossTotal;
+      }
+    
+  } }
+
+ return tempCalculation
+  }
+  const handleCuttingCalculate = (tempData) => {
+  
+    
+    // calculate cutting loss total
+          const { cuttingLoss_total, cuttingScarpBox_total } = tempData.reduce(
+          (acc, lot) => {
+            if (lot.data) {
+              const attrValues = lot.data?.[6]?.ProcessSteps?.[2]?.AttributeValues;
+
+              if (attrValues?.length >= 1) {
+                acc.cuttingLoss_total += attrValues.reduce(
+                  (sum, item) => sum + (item.value || 0),
+                  0
+                );
+              }
+            } else {
+              acc.cuttingScarpBox_total += lot.scarpInfo?.scarp[1].value || 0;
+            }
+
+            return acc;
+          },
+          { cuttingLoss_total: 0, cuttingScarpBox_total: 0 }
+        );
+        // calculate cutting pure total
+       const cutting_Puretotal = tempData.reduce((sum, lot) => {
+          if (lot.scarpInfo) {
+            return sum + (lot?.scarpInfo?.totalScarp?.[1]?.value || 0);
+          }
+          return sum;
+        }, 0);
+   
+       
+     return{cuttingLoss:cuttingLoss_total-cuttingScarpBox_total,cutting_Puretotal}
+
+  }
+  const handleMachineCalculate = (tempData) => {
+  
+        const total = tempData.reduce((sum, lot) => {
+        if (lot.scarpInfo) {
+          return sum + (lot.scarpInfo?.totalScarp?.[0]?.value || 0);
+        }
+        return sum;
+        }, 0);
+      return total
+  
+
+  }
  
   const handleOtherProcess = (lotid, lotDate, attribute_id, value, key, process_id, lotArrIndex) => {
     const tempData = [...items];
@@ -673,57 +639,68 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
     setItems(tempData);
   };
 
- 
+ const handleLotCreate= async () => {
+    try {
+
+    
+      if (initialWeight && touchValue) {
+
+        await createLot(initialWeight, touchValue); // Response is an object
+        allData() // refetch all lots information
+
+        setInitialWeight("");
+        setTouchValue("");// Clear input field
+        setOpen(false);
+        setIsLotCreated(true);
+        toast.success("Lot Created", { autoClose: 2000 });
+      } else {
+        toast.warn("Enter Lot Details", { autoClose: 2000 });
+      }
+
+    } catch (error) {
+      setInitialWeight("");
+      setTouchValue("");
+      toast.warn('Error On Create Lot', { autoClose: 1500 })
+    };
+  }
+
+  // console.log("Processes:", processes);
+
+  const handleSaveProcess = async () => {
+    try {
+      
+      const res= await saveLot(items);
+      
+     if (res?.status === 200 || res?.success==="ok") {
+        await allData();
+      
+    }
+      // fetch lot information   
+    } catch (err) {
+      console.log("Enter Lot Information")
+    }
+
+  }
+
   const handleDateWiseFilter = async () => {
     try {
-      console.log('fromDate', fromDate);
-      console.log('toDate', toDate);
-
-
-      if (fromDate > toDate) {
-        alert('Your Date Order was Wrong');
+       if (fromDate > toDate) {
+        toast.warn('Your Date Order was Wrong');
         return;
       }
-      setItems([])
-     
-      const res = await getLotDatewise(fromDate, toDate);
-      console.log('DateWiseFilter', res.data.data);
-      // const tempRes=handleLotChildItem(res.data.data)
- 
+      setLoading(true)
+      console.log(fromDate,toDate)
+      // const res = await getLotDatewise(fromDate, toDate);
+      
       // setItems(res.data.data)
-      // setCalculation(docalculation(res.data.data))
-      // handleMachineCalculate(items, calculation)
-      // handleCuttingCalculate(items,calculation)
-      // getProduct()
-      // console.log('itemsAfterDateWiseFilter', items);
+      setLoading(false)
     } catch (error) {
       console.error('Error fetching data by date:', error.message);
-      alert('Select Date First.');
+      toast.warn(error.message)
+      setLoading(false)
     }
   };
-  // useEffect(() => {
-  //   const today = new Date();
-  //   const year = today.getFullYear();
-  //   const month = String(today.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
-  //   const day = String(today.getDate()).padStart(2, '0');
-
-  //   const currentDate = `${year}-${month}-${day}`;
-  //   console.log('currentDate', currentDate);
-
-  //   setFromDate(currentDate);
-  //   setToDate(currentDate);
-  // }, []);
-
-  useEffect(() => {
-    // Get current date in UTC
-    const now = new Date();
-    const formattedDate = now.toISOString().split("T")[0];
-    setFromDate(formattedDate);
-    setToDate(formattedDate);
-  }, []);
-
-
-
+ 
   useEffect(() => {
     allData()
     getProduct()
@@ -735,23 +712,11 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
             return docalculation();
     }, [items]);
 
-
-  // useEffect(() => {
    
-   
-  //   // setCalculation(docalculation(items))
-  //   // handleMachineCalculate(items, calculation)
-  //   // handleCuttingCalculate(items,calculation)
-
-  // }, [items])
-
-  const billRef = useRef(null);
-
-  const tableRef = useRef(null);
 
   return (
     
-    <Box sx={{ padding: "20px" }} ref={billRef}>
+    <Box sx={{ padding: "20px" }} >
       <Box sx={{ textAlign: "right", marginBottom: "0px" }}>
         <Button
           variant="contained"
@@ -765,7 +730,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
         <Button
           variant="contained"
           color="secondary"
-          onClick={handleSaveData}
+          onClick={handleSaveProcess}
           sx={{ marginRight: "10px" }}
 
         >
@@ -774,27 +739,16 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
 
       </Box>
       {/* DateWiseFilter */}
-
-      <div style={{ padding: 20 }}>
-          <ToastContainer position="top-right" autoClose={2000}/>
-        <div style={{ display: "flex", gap: "10px", marginBottom: 0, position: 'relative' }}>
-          <TextField
-            label="From Date"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-          />
-          <TextField
-            label="To Date"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-          />
-          <Button variant="contained" onClick={() => { handleDateWiseFilter() }}>Filter</Button>
-        </div>
-      </div>
+          <DateRangePicker 
+          fromDate={fromDate} 
+          toDate={toDate} 
+          setFromDate={setFromDate} 
+          setToDate={setToDate}
+          handleDateWiseFilter={handleDateWiseFilter}
+          
+          / > 
+     
+      <ToastContainer position="top-right" autoClose={2000}/>
 
 
       <StyledTableContainer component={Paper} >
@@ -1396,7 +1350,6 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
                                 size="small"
                                 value={Number((lotItem?.scarpInfo?.cuttingScarp[1].value).toFixed(3))}
                                 label="GivenScarpPure"
-                                type="number"
                                 autoComplete="off"
                               />
                             </Grid>
@@ -1489,7 +1442,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
             <Button onClick={handleClose} sx={{ mr: 2 }}>
               Cancel
             </Button>
-            <Button variant="contained" onClick={handleSave} ref={saveRef} >
+            <Button variant="contained" onClick={handleLotCreate} ref={saveRef} >
               Save
             </Button>
           </Box>

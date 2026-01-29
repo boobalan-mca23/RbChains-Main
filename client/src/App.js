@@ -13,7 +13,7 @@ import Customer from "./Components/Customer/customer";
 import Billing from "./Components/Billing/billing";
 import Report from "./Components/Report/report";
 import Process from "./Components/Lot/process";
-import Dailyreport from "./Components/Report/dailyreport";
+import DailyReport from "./Components/Report/dailyreport";
 import Customerreport from "./Components/Report/custreport";
 import Master from './Components/MasterFile/Master'
 import Item from "./Components/ItemFile/Item";
@@ -45,7 +45,7 @@ function Layout() {
         <Route path="/billing" element={<Billing />} />
         <Route path="/receiptvoucher" element={<Receipt />}></Route>
         <Route path="/report" element={<Report />} />
-        <Route path="/dailyreport" element={<Dailyreport />} />
+        <Route path="/dailyreport" element={<DailyReport />} />
         <Route path="/customerreport" element={<Customerreport />} />
         <Route path="/stockReport" element={<StockReport />} />
         <Route path="/master" element={<Master />} />
