@@ -1,37 +1,31 @@
- const getItemTotalByDate = (lots) => {
-    console.log('lots',lots)
-  return lots.reduce((acc, lot) => {
-    const date = lot.createdAt;
-   
-    const count =
-      lot.data?.[3]?.ProcessSteps?.[0]?.AttributeValues?.length || 0;
-
-    acc[date] = (acc[date] || 0) + count;
-    return acc;
-  }, {});
-};
-
+ 
+const handleScarpItemTotal = (date, tempRes) => {
+    //add total items
+    let totalItem = 0;
+    let filteredLot = tempRes.filter((item,_) => item.date?.split("T")[0] === date?.split("T")[0]);
+    for (const lot of filteredLot) {
+      totalItem += lot.data[3].ProcessSteps[0].AttributeValues.length;
+    }
+    return totalItem;
+  };
 
  const handleLotChildItem = (response) => {
-  const itemTotalByDate = getItemTotalByDate(response);
  
-  return response.map(lot => {
-    if (!lot.scarpInfo) return lot;
-    console.log('lot in map',lot)
-  
-    const total = itemTotalByDate[lot.createdAt] || {};
-   console.log('total',total)
-    return {
-      ...lot,
-      scarpInfo: {
-        ...lot.scarpInfo,
-        itemTotal: lot.scarpInfo.itemTotal.map(item => ({
-          ...item,
-          value:total 
-        }))
+  const tempRes = response;
+    let item_Total = 0;
+    for (const res of tempRes) {
+      if (res.scarpInfo) {
+        item_Total = handleScarpItemTotal(
+          res.scarpInfo.createdAt,
+          tempRes,
+        );
+        res.scarpInfo.itemTotal[0].value= item_Total;
+        res.scarpInfo.itemTotal[1].value= item_Total;
+        item_Total = 0;
       }
-    };
-  });
+    }
+   return tempRes
+
 };
 
 export default handleLotChildItem

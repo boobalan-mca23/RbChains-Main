@@ -6,7 +6,7 @@ import SalesReport from "./SalesReport";
 import { useNavigate ,useLocation} from "react-router-dom";
 import CustReport from "./custreport";
 import ReceiptReport from "./receiptreport"
-import DailyReport from "./dailyreport"
+import DailyReport from "../Report/dailyreport";
 
 
 function Report() {
