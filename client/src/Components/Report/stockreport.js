@@ -151,30 +151,7 @@ function StockReport() {
   const [stock, setStock] = useState([]);
   const printRef = useRef();
 
-  useEffect(() => {
-    const fetchStock = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/stock/getStock`,
-          {
-            params:{
-              type:"ALL"
-            }
-          }
-        );
-        if(response.data.status){
-          setStock(response.data.data);
-        }
-       
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchStock();
-  }, []);
-
-  const handleStatus = async(status) => {
-     
+    const fetchStock = async (status) => {
       try {
         const response = await axios.get(
           `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/stock/getStock`,
@@ -191,8 +168,13 @@ function StockReport() {
       } catch (err) {
         console.error(err);
       }
-    
-  };
+    };
+  useEffect(() => {
+  
+    fetchStock("All");
+  }, []);
+
+ 
 
   const handlePrintPDF = async () => {
     const input = printRef.current;
@@ -239,13 +221,13 @@ function StockReport() {
         }}
       >
         <Box sx={{ display: "flex", gap: 2 }}>
-          <Button variant="outlined" onClick={() => handleStatus("ALL")}>
+          <Button variant="outlined" onClick={() =>  fetchStock("ALL")}>
             All
           </Button>
-          <Button variant="outlined" onClick={() => handleStatus("ACTIVE")}>
+          <Button variant="outlined" onClick={() => fetchStock("ACTIVE")}>
             Active
           </Button>
-          <Button variant="outlined" onClick={() => handleStatus("SOLD")}>
+          <Button variant="outlined" onClick={() => fetchStock("SOLD")}>
             Sold
           </Button>
         </Box>
