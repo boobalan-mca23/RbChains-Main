@@ -2,7 +2,7 @@ import React from "react";
 
 import {TableCell,TableHead,TableRow} from "@mui/material";
 import { styled } from "@mui/material/styles";
-import DateRangePicker from "../../common/DateRangePicker/DateRangePicker";
+
 const StyledTableCell = styled(TableCell)({ border: "1px solid #ccc", textAlign: "center", padding: "6px", });
 
 const LotReportTabelHead=(props)=>{

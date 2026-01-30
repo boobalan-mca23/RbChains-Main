@@ -1,6 +1,6 @@
 import {TextField, Button,}from '@mui/material'
 
-const DateRangePicker= ({fromDate,toDate,setFromDate,setToDate,handleDateWiseFilter,handlePrintPDF,page})=>{
+const DateRangePicker= ({fromDate,toDate,setFromDate,setToDate,handleDateWiseFilter,handlePrintPDF,page,print})=>{
      return(
           <>
                  <div style={{ padding: 20 }}>
@@ -25,8 +25,8 @@ const DateRangePicker= ({fromDate,toDate,setFromDate,setToDate,handleDateWiseFil
                      </div>
                       {page==='report' ? ( 
                         <div>
-                            <Button sx={{marginLeft:"2rem"}}variant="contained" onClick={handlePrintPDF}>
-                                Print
+                            <Button disabled={print} sx={{marginLeft:"2rem"}}variant="contained" onClick={handlePrintPDF}>
+                                {print ? "Pdf Downloading..." :"Pdf Download"}
                             </Button>
                         </div>):(null)}
           

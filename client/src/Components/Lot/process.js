@@ -728,6 +728,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
           AddItem
         </Button>
         <Button
+          disabled={items.length===0}
           variant="contained"
           color="secondary"
           onClick={handleSaveProcess}
