@@ -28,6 +28,7 @@ const ProcessTable = () => {
   const [initialWeight, setInitialWeight] = useState("");
   const [touchValue, setTouchValue] = useState("");
   const [isLotCreated, setIsLotCreated] = useState(false);
+  const[isProcess,setIsProcess]=useState(false)
   const [fromDate, setFromDate] = useState(today);
   const [toDate, setToDate] = useState(today);
   const [process,setProcess]=useState([])
@@ -326,6 +327,8 @@ const ProcessTable = () => {
 
   const handleClose = () => {
     setOpen(false);
+    setInitialWeight("")
+    setTouchValue("")
   };
 
  
@@ -642,7 +645,7 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
  const handleLotCreate= async () => {
     try {
 
-    
+        setIsLotCreated(true);
       if (initialWeight && touchValue) {
 
         await createLot(initialWeight, touchValue); // Response is an object
@@ -651,13 +654,15 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
         setInitialWeight("");
         setTouchValue("");// Clear input field
         setOpen(false);
-        setIsLotCreated(true);
+        
         toast.success("Lot Created", { autoClose: 2000 });
+        setIsLotCreated(false)
       } else {
         toast.warn("Enter Lot Details", { autoClose: 2000 });
       }
 
     } catch (error) {
+      setIsLotCreated(false)
       setInitialWeight("");
       setTouchValue("");
       toast.warn('Error On Create Lot', { autoClose: 1500 })
@@ -668,16 +673,21 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
 
   const handleSaveProcess = async () => {
     try {
-      
+       setIsProcess(true)
       const res= await saveLot(items);
       
      if (res?.status === 200 || res?.success==="ok") {
+        
         await allData();
+     
       
     }
       // fetch lot information   
     } catch (err) {
       console.log("Enter Lot Information")
+      setIsProcess(false)
+    }finally{
+       setIsProcess(false)
     }
 
   }
@@ -690,9 +700,9 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
       }
       setLoading(true)
       console.log(fromDate,toDate)
-      // const res = await getLotDatewise(fromDate, toDate);
+      const res = await getLotDatewise(fromDate, toDate);
       
-      // setItems(res.data.data)
+      setItems(res.data.data)
       setLoading(false)
     } catch (error) {
       console.error('Error fetching data by date:', error.message);
@@ -728,14 +738,14 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
           AddItem
         </Button>
         <Button
-          disabled={items.length===0}
+          disabled={items.length===0 || isProcess?true:false}
           variant="contained"
           color="secondary"
           onClick={handleSaveProcess}
           sx={{ marginRight: "10px" }}
 
         >
-          Save
+          {isProcess?"Process Saving...":"Save"}
         </Button>
 
       </Box>
@@ -1388,8 +1398,11 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
         
         </div>
       </StyledTableContainer>
-     
-      <Modal open={open} onClose={handleClose}>
+      <Modal open={open} 
+        onClose={(event, reason) => {
+    if (reason === "backdropClick") return; // block outside click
+    handleClose(); //  close only via button or escape
+  }}>
         <Box
           sx={{
             position: "absolute",
@@ -1443,12 +1456,13 @@ for (let processIndex = 1; processIndex <= 7; processIndex++) {
             <Button onClick={handleClose} sx={{ mr: 2 }}>
               Cancel
             </Button>
-            <Button variant="contained" onClick={handleLotCreate} ref={saveRef} >
-              Save
+            <Button disabled={isLotCreated} variant="contained" onClick={handleLotCreate} ref={saveRef} >
+              {isLotCreated ? "Saving...":"Save"}
             </Button>
           </Box>
         </Box>
       </Modal>
+     
     </Box>
 
   );
