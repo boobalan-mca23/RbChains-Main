@@ -10,12 +10,17 @@ import html2canvas from "html2canvas";
 import './dailyReport.css'
 import DateRangePicker from "../common/DateRangePicker/DateRangePicker";
 import LotReportTabelHead from "./DailyReport/LotReportTableHead";
-const StyledTableCell = styled(TableCell)({ border: "1px solid #ccc", textAlign: "center", padding: "6px", });
+import LotReportTableFooter from "./DailyReport/LotReportTableFooter";
+import LotReportGrid from "./DailyReport/LotReportGrid";
+
+const StyledTableCell = styled(TableCell)({ border: "1px solid #ccc", textAlign: "center", padding: "6px",fontSize:"13px" });
 function DailyReport() {
 
     const today = new Date().toISOString().split("T")[0];
     const printRef = useRef()
     const [loading,setLoading]=useState(true)
+    const [print,setPrint]=useState(false)
+
     const [fromDate, setFromDate] = useState(today);
     const [toDate, setToDate] = useState(today);
     const [items, setItems] = useState([])
@@ -41,7 +46,7 @@ function DailyReport() {
 
   const handleTotal = (lotid, lotProcessId, processId) => {
      const tempData = [...items];
-     const lotData = tempData.filter((item,_) => item.lotid === lotid);
+     const lotData = tempData.filter((item,_) => item.id === lotid);
  
      const totalValue = lotData[0]?.data[lotProcessId]?.ProcessSteps[processId]?.AttributeValues.reduce(
        (acc, item) => acc + item.value,
@@ -51,38 +56,55 @@ function DailyReport() {
      return Number(totalValue)||0;
    }
 
-  const handlePrintPDF = async () => {
+const handlePrintPDF = async () => {
+  try {
+    setPrint(true);
+
     const input = printRef.current;
 
     const canvas = await html2canvas(input, {
-      scale: 2,
+      scale: 1.5,
       useCORS: true,
     });
 
     const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pdfWidth = 210; // A4 width in mm
-    const pdfHeight = 297; // A4 height in mm
 
-    const imgProps = pdf.getImageProperties(imgData);
-    const imgWidth = pdfWidth;
-    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+    const pdf = new jsPDF("l", "mm", "a4");
+    const pdfWidth = 297;
+    const pdfHeight = 210;
 
+    // Heading
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(16);
+    pdf.text("Daily Lot Report", pdfWidth / 2, 12, { align: "center" });
+
+    const topMargin = 18;
+    const imgWidth = pdfWidth - 10;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let position = topMargin;
     let heightLeft = imgHeight;
-    let position = 0;
 
-    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-    heightLeft -= pdfHeight;
+    pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
+    heightLeft -= pdfHeight - topMargin;
 
     while (heightLeft > 0) {
-      position = position - pdfHeight;
       pdf.addPage();
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      pdf.text("Lot Report", pdfWidth / 2, 12, { align: "center" });
+      position = topMargin - heightLeft;
+      pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
     }
 
-    pdf.save("Daily-Report.pdf");
-  };
+    pdf.save("Lot-Report.pdf");
+  } catch (err) {
+    alert("PDF generation failed");
+  } finally {
+    setPrint(false);
+  }
+};
+
+
 const handleDateWiseFilter = async () => {
     try {
       console.log('fromDate', fromDate);
@@ -311,6 +333,7 @@ useEffect(() => {
           handleDateWiseFilter={handleDateWiseFilter}
           handlePrintPDF={handlePrintPDF}
           page='report'
+          print={print}
           / > 
 
       <div style={{ position: 'relative', overflow: 'auto', maxHeight: '57vh', padding: "10px", margin: "auto" }} className=" hidescrollbar">
@@ -389,10 +412,10 @@ useEffect(() => {
                                                 ))}
                                             {
                                                 lotItem.data[7]?.ProcessSteps[1]?.AttributeValues.length >= 1 ? (
-                                                <StyledTableCell >
+                                                <StyledTableCell style={{borderRight:"3px solid black"}} >
                                                     <b>{(lotItem.data[0].ProcessSteps[0].AttributeValues[0].value - handleTotal(lotItem.id, 7, 1)).toFixed(3)}</b>
                                                 </StyledTableCell>
-                                                ) : (<StyledTableCell></StyledTableCell>)
+                                                ) : (<StyledTableCell style={{borderRight:"3px solid black"}} ></StyledTableCell>)
                                             }
                                     </TableRow>
                             {
@@ -498,7 +521,7 @@ useEffect(() => {
                                       </StyledTableCell>)
                                       : (<StyledTableCell style={{ borderRight: "3px solid black" }}></StyledTableCell>)
                                   }
-                                  <StyledTableCell style={{ borderTop: "2px solid white", }}></StyledTableCell> 
+                                  <StyledTableCell style={{ borderTop: "3px solid balck",borderRight:"3px solid black" }}></StyledTableCell> 
             
                                 </TableRow>
             
@@ -567,7 +590,7 @@ useEffect(() => {
                                   <StyledTableCell
                                     style={{ borderRight: "3px solid black" }}
                                   ></StyledTableCell>
-                                  <StyledTableCell></StyledTableCell>
+                                  <StyledTableCell style={{borderRight:"3px solid black"}}></StyledTableCell>
                                 </TableRow>
             
             
@@ -575,162 +598,10 @@ useEffect(() => {
             
                                 ) :
                                 (
-                                  lotItem?.scarpInfo && Object.keys(lotItem.scarpInfo).length > 0 ? ( 
-                               <React.Fragment>
-                  <TableRow>
-                        <StyledTableCell colSpan={11}></StyledTableCell>
-                        <StyledTableCell colSpan={3} style={{
-                          borderLeft: "3px solid black",
-                          borderRight: "3px solid black",
-                          borderTop: "none",
-                          borderBottom: "none"
-                        }} >
-                          <Grid container spacing={1}>
-
-                            <Grid container item spacing={1} >
-                              <Grid item xs={6} display="flex" alignItems="center" width={200}>
-                                <TextField
-                                  label="Date"
-                                 value={new Date(lotItem?.scarpInfo?.createdAt).toLocaleDateString('en-GB')}
-                                  InputProps={{
-                                    style: { fontSize: "12px" }, // this controls the input value font
-                                  }}
-                                  InputLabelProps={{
-                                    style: { fontSize: "15px" }, // this controls the label font
-                                  }}
-
-                                >
-
-                                </TextField>
-                              </Grid>
-                              <Grid item xs={6} >
-                                <TextField fullWidth label="ItemTotal"
-                                  value={lotItem?.scarpInfo?.itemTotal[0].value}
-                                  InputProps={{
-                                    style: { fontSize: "12px" }, // this controls the input value font
-                                  }}
-                                  InputLabelProps={{
-                                    style: { fontSize: "15px" }, // this controls the label font
-                                  }}
-
-                                />
-                              </Grid>
-                            </Grid>
-
-
-                            <Grid container item spacing={1}>
-                              <Grid item xs={6}>
-                                <TextField fullWidth  value={Number(lotItem?.scarpInfo?.scarp[0]?.value) || ""} label="Scarp" InputProps={{
-                                  style: { fontSize: "12px" },
-                                  // this controls the input value font
-                                }}
-                                  InputLabelProps={{
-                                    style: { fontSize: "15px" }, // this controls the label font
-                                  }} />
-                              </Grid>
-                              <Grid item xs={6}>
-                                <TextField fullWidth label="Loss" value={(lotItem?.scarpInfo?.totalScarp[0]?.value)?.toFixed(3)} InputProps={{
-                                  style: { fontSize: "12px" }, // this controls the input value font
-                                }}
-                                  InputLabelProps={{
-                                    style: { fontSize: "15px" }, // this controls the label font
-                                  }} />
-                              </Grid>
-                            </Grid>
-                          </Grid>
-                        </StyledTableCell>
-                        <StyledTableCell colSpan={8}></StyledTableCell>
-                        <StyledTableCell colSpan={4} style={{
-                          borderLeft: "3px solid black",
-                          borderRight: "3px solid black",
-                          borderTop: "none",
-                          borderBottom: "none"
-                        }} >
-                          <Grid container spacing={1}>
-
-                            <Grid container item spacing={1} >
-                              <Grid item xs={6} display="flex" alignItems="center" width={200}>
-                                <TextField
-                                  label="Date"
-                                  value={new Date(lotItem?.scarpInfo?.createdAt).toLocaleDateString('en-GB')}
-                                  InputProps={{
-                                    style: { fontSize: "12px" }, // this controls the input value font
-                                  }}
-                                  InputLabelProps={{
-                                    style: { fontSize: "15px" }, // this controls the label font
-                                  }}
-
-                                >
-
-                                </TextField>
-                              </Grid>
-                              <Grid item xs={6} >
-                                <TextField fullWidth label="ItemTotal"
-                                    value={lotItem?.scarpInfo?.itemTotal[1].value}
-                                  InputProps={{
-                                    style: { fontSize: "12px" }, // this controls the input value font
-                                  }}
-                                  InputLabelProps={{
-                                    style: { fontSize: "15px" }, // this controls the label font
-                                  }}
-
-                                />
-                              </Grid>
-                            </Grid>
-
-
-                            <Grid container item spacing={1}>
-                              <Grid item xs={6}>
-                                <TextField 
-                                label="GivenScarp"
-                                fullWidth
-                                value={Number(lotItem?.scarpInfo?.scarp[1]?.value)||""} 
-                                InputProps={{
-                                  style: { fontSize: "12px" },
-                                  // this controls the input value font
-                                }}
-                                  InputLabelProps={{
-                                    style: { fontSize: "15px" }, // this controls the label font
-                                  }} />
-                              </Grid>
-                              <Grid item xs={6}>
-                                <TextField fullWidth   value={Number(lotItem?.scarpInfo?.touch[1].value) || ""} label="GivenTouch" InputProps={{
-                                  style: { fontSize: "12px" },
-                                  // this controls the input value font
-                                }}
-                                  InputLabelProps={{
-                                    style: { fontSize: "15px" }, // this controls the label font
-                                  }} />
-                              </Grid>
-                              <Grid item xs={6}>
-                                <TextField 
-                                fullWidth 
-                                value={Number((lotItem?.scarpInfo?.cuttingScarp[1].value).toFixed(3))}
-                                label="GivenScarpPure" 
-                                InputProps={{
-                                  style: { fontSize: "12px" },
-                                  // this controls the input value font
-                                }}
-                                  InputLabelProps={{
-                                    style: { fontSize: "15px" }, // this controls the label font
-                                  }} />
-                              </Grid>
-                              <Grid item xs={6}>
-                                <TextField fullWidth label="BalanceScarpPure" value={Number(lotItem?.scarpInfo?.totalScarp[1]?.value)?.toFixed(3)} InputProps={{
-                                  style: { fontSize: "12px" }, // this controls the input value font
-                                }}
-                                  InputLabelProps={{
-                                    style: { fontSize: "15px" }, // this controls the label font
-                                  }} />
-                              </Grid>
-                            </Grid>
-                          </Grid>
-                        </StyledTableCell>
-                        <StyledTableCell style={{
-                          borderRight: "3px solid black",
-
-                        }} colSpan={6}></StyledTableCell>
-                      </TableRow> 
+                 lotItem?.scarpInfo && Object.keys(lotItem.scarpInfo).length > 0 ? ( 
+                                 <React.Fragment>
+                                  {/* Lot Report Grid Box */}
+                                   <LotReportGrid lotScarp={lotItem?.scarpInfo}/>
                                   </React.Fragment>
                               ):null
                             )
@@ -740,41 +611,11 @@ useEffect(() => {
                           </>
                         
                         ) }
-          {/* <TableFooter>
-            <StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>RawGold:{(calculation[0].rawGold).toFixed(3)}</p></StyledTableCell>
-            <StyledTableCell><p ></p></StyledTableCell>
-            {
-              calculation[2].process.map((item, key) => (
-                <>
+              
+                {/* Lot Report Footer */}
 
-                  <StyledTableCell></StyledTableCell>
-
-                  <StyledTableCell>
-                    <p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>
-                      {item.processName === 'Finishing' ? `${(item.Weight[1].aw).toFixed(3)}` : ""}
-                    </p>
-                  </StyledTableCell>
-                  {item.processName === 'Wire' ? (
-                    <>
-                      <StyledTableCell></StyledTableCell>
-
-                    </>) : ("")}
-                  {
-                    item.processName === "Machine" || item.processName === "Cutting" ? ("") : (<StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>{(item.Weight[2].sw).toFixed(3)}</p></StyledTableCell>)
-                  }
-                  <StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>{item.processName === "Machine" || item.processName === "Cutting" ? (item.Weight[2].lw).toFixed(3) : (item.Weight[3].lw).toFixed(3)}</p></StyledTableCell>
-                  {
-                    item.processName === "Cutting" ? (<StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>{(item.Weight[3].pw).toFixed(3)}</p></StyledTableCell>) : ("")
-                  }
-
-
-
-                </>
-              ))
-            }
-            <StyledTableCell></StyledTableCell>
-            <StyledTableCell><p style={{ fontSize: "14px", fontWeight: "bold", color: "black" }}>{(calculation[3].lotTotal).toFixed(3)}</p></StyledTableCell>
-          </TableFooter> */}
+                <LotReportTableFooter calculation={calculation} />
+          
         </Table>
 
       </div>

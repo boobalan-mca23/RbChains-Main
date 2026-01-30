@@ -5,6 +5,7 @@ import { styled } from "@mui/material/styles";
 import React from "react";
 const StyledTableCell = styled(TableCell)({ border: "1px solid #ccc", textAlign: "center", padding: "5px", });
 const StyledInput = styled(TextField)({ "& .MuiOutlinedInput-notchedOutline": { border: "none" }, "& .MuiInputBase-input": { textAlign: "center", padding: "2px" }, width: "30px" });
+
 const LotTableFooter=(props)=>{
    const {calculation}=props
 
