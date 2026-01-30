@@ -11,7 +11,7 @@ import './dailyReport.css'
 import DateRangePicker from "../common/DateRangePicker/DateRangePicker";
 import LotReportTabelHead from "./DailyReport/LotReportTableHead";
 import LotReportTableFooter from "./DailyReport/LotReportTableFooter";
-import LotReportGrid from "./DailyReport/LotReportGrid";
+import LotReportGrid from "./DailyReport/LotGrid";
 
 const StyledTableCell = styled(TableCell)({ border: "1px solid #ccc", textAlign: "center", padding: "6px",fontSize:"13px" });
 function DailyReport() {
@@ -335,9 +335,9 @@ useEffect(() => {
           page='report'
           print={print}
           / > 
-
-      <div style={{ position: 'relative', overflow: 'auto', maxHeight: '57vh', padding: "10px", margin: "auto" }} className=" hidescrollbar">
         <h3 style={{ textAlign: "center" }}>Daily Lot Report</h3>
+      <div style={{ position: 'relative', overflow: 'auto', maxHeight: '57vh', padding: "10px", margin: "auto" }} className=" hidescrollbar">
+       
         {/* <Table> */}
 
         <Table ref={printRef}>

@@ -1,7 +1,7 @@
 const express = require('express');
 const router=express.Router()
 
-const {getStock}=require('../controllers/stock.controller')
+const stock =require('../controllers/stock.controller')
 
-router.get('/getStock',getStock)
+router.get('/getStock',stock.stockWithStatus)
 module.exports=router

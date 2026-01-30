@@ -149,17 +149,23 @@ import html2canvas from "html2canvas";
 
 function StockReport() {
   const [stock, setStock] = useState([]);
-  const [tempstock, setTempStock] = useState([]);
   const printRef = useRef();
 
   useEffect(() => {
     const fetchStock = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/stock/getStock`
+          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/stock/getStock`,
+          {
+            params:{
+              type:"ALL"
+            }
+          }
         );
-        setStock(response.data.data);
-        setTempStock(response.data.data);
+        if(response.data.status){
+          setStock(response.data.data);
+        }
+       
       } catch (err) {
         console.error(err);
       }
@@ -167,13 +173,25 @@ function StockReport() {
     fetchStock();
   }, []);
 
-  const handleStatus = (status) => {
-    if (status !== "all") {
-      const filtered = stock.filter((item) => item.product_status === status);
-      setTempStock(filtered);
-    } else {
-      setTempStock(stock);
-    }
+  const handleStatus = async(status) => {
+     
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_SERVER_URL}/api/stock/getStock`,
+          {
+            params:{
+              type:status
+            }
+          }
+        );
+        if(response.data.status){
+          setStock(response.data.data);
+        }
+       
+      } catch (err) {
+        console.error(err);
+      }
+    
   };
 
   const handlePrintPDF = async () => {
@@ -221,7 +239,7 @@ function StockReport() {
         }}
       >
         <Box sx={{ display: "flex", gap: 2 }}>
-          <Button variant="outlined" onClick={() => handleStatus("all")}>
+          <Button variant="outlined" onClick={() => handleStatus("ALL")}>
             All
           </Button>
           <Button variant="outlined" onClick={() => handleStatus("ACTIVE")}>
@@ -271,8 +289,8 @@ function StockReport() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {tempstock.length > 0 ? (
-                tempstock.map((item, index) => (
+              {stock.length > 0 ? (
+                stock.map((item, index) => (
                   <TableRow key={item.id}>
                     <TableCell align="center">{index + 1}</TableCell>
                     <TableCell align="center">

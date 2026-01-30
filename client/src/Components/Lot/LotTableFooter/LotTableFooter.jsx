@@ -12,7 +12,7 @@ const LotTableFooter=(props)=>{
     return(
              <React.Fragment> 
 
-                 <TableFooter>
+                 <TableFooter  >
                               <StyledTableCell><p style={{ fontSize: "17px", fontWeight: "bold", color: "black" }}>Total RawGold:{(calculation[0].rawGold).toFixed(3)}</p></StyledTableCell>
                               <StyledTableCell><p ></p></StyledTableCell>
                               {

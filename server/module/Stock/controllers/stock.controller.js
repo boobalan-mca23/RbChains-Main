@@ -2,11 +2,21 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 //get stock details
-const getStock=async(req,res)=>{
-   
-    try{
+exports.stockWithStatus=async(req,res)=>{
+      const {type}=req.query
 
-        const stockData=await prisma.productStocks.findMany()
+    try{
+        const whereCondition={}
+
+        if(type==="ACTIVE"||type==="SOLD"){
+            whereCondition.product_status=type
+        }
+       
+        const stockData=await prisma.productStocks.findMany(
+            {
+                where:whereCondition
+            }
+        )
         const stockDetail=[]
     
         for(const stock of stockData){
@@ -36,13 +46,14 @@ const getStock=async(req,res)=>{
     
         }
          
-        res.send({data:stockDetail})
+        res.status(200).json({
+            message:"Stock data fetched SuccessFully",
+            status:true,
+            data:stockDetail})
+            
     }catch(err){
         res.send(500).json({err:'Stock is Empty'})
     }
    
 }
 
-module.exports = {
-    getStock
-  };
